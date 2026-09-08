@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알콩달콩 릴레이 그림 퀴즈!</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Jua & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'sans-serif'],
+                        jua: ['"Jua"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            500: '#d946ef',
+                            650: '#a21caf',
+                            700: '#86198f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #fbcfe8 0%, #e0e7ff 50%, #bae6fd 100%); min-height: 100vh; }
+        .font-jua { font-family: 'Jua', sans-serif; }
+        .canvas-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between overflow-x-hidden text-slate-700">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-y4_CgIabLBYLNOMQCyQguXFTWNczQKo",
+            authDomain: "ethics1class-2026-8e2d7.firebaseapp.com",
+            databaseURL: "https://ethics1class-2026-8e2d7-default-rtdb.firebaseio.com",
+            projectId: "ethics1class-2026-8e2d7",
+            storageBucket: "ethics1class-2026-8e2d7.firebasestorage.app",
+            messagingSenderId: "916404306806",
+            appId: "1:916404306806:web:f5a214b6881f5c4189b057"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let currentRoomId = "room-main-google-v1";
+        let unsubRoom = null;
+        let unsubChat = null;
+        let unsubCanvas = null;
+
+        window.userNickname = "";
+        window.isTeacherUser = false;
+
+        const middleSchoolPrompts = [
+            "세종대왕", "거북선", "독도", "피타고라스", "광합성", 
+            "인공지능", "스마트폰", "경복궁", "DNA", "삼일절", 
+            "축구공", "블랙홀", "지진", "화산폭발", "피아노", 
+            "에펠탑", "자유의여신상", "모나리자", "축구선수", "오케스트라",
+            "비빔밥", "떡볶이", "캥거루", "펭귄", "태양계"
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-btn').addEventListener('click', handleStudentLogin);
+            document.getElementById('teacher-google-btn').addEventListener('click', handleTeacherGoogleLogin);
+            
+            document.getElementById('chat-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendChatMessage();
+            });
+
+            initCanvas();
+        });
+
+        window.handleStudentLogin = async function() {
+            const nickname = document.getElementById('nickname-input').value.trim();
+            if (!nickname) {
+                showToast("닉네임을 입력해주세요!");
+                return;
+            }
+            window.userNickname = nickname;
+            window.isTeacherUser = false;
+            
+            try {
+                await signInAnonymously(auth);
+                currentUser = auth.currentUser;
+            } catch (err) {
+                console.error("Anonymous auth error:", err);
+            }
+            startSession();
+        }
+
+        window.handleTeacherGoogleLogin = async function() {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                currentUser = result.user;
+                window.userNickname = currentUser.displayName ? `${currentUser.displayName} 선생님` : "선생님";
+                window.isTeacherUser = true;
+                
+                showToast("구글 계정으로 선생님 로그인 성공!");
+                startSession();
+            } catch (err) {
+                console.error("Google Login Error:", err);
+                showToast("구글 로그인 실패: 팝업 차단 여부나 Firebase 설정을 확인해주세요.");
+            }
+        }
+
+        function startSession() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('user-display-name').innerText = window.userNickname;
+            
+            if (window.isTeacherUser) {
+                document.getElementById('teacher-controls').classList.remove('hidden');
+                document.getElementById('role-badge').innerText = "방장 (구글 선생님)";
+                document.getElementById('role-badge').className = "px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-jua shadow-sm";
+            } else {
+                document.getElementById('role-badge').innerText = "학생 참가자";
+                document.getElementById('role-badge').className = "px-3 py-1 bg-sky-500 text-white rounded-full text-xs font-jua shadow-sm";
+            }
+
+            connectToRoom();
+        }
+
+        let roomData = {
+            status: 'waiting', 
+            currentDrawer: '',
+            drawerName: '',
+            currentWord: ''
+        };
+
+        async function connectToRoom() {
+            const roomRef = doc(db, 'rooms', currentRoomId);
+            
+            const snap = await getDoc(roomRef);
+            if (!snap.exists() && window.isTeacherUser) {
+                await setDoc(roomRef, {
+                    status: 'waiting',
+                    currentDrawer: currentUser ? currentUser.uid : 'system',
+                    drawerName: window.userNickname,
+                    currentWord: ''
+                });
+            }
+
+            unsubRoom = onSnapshot(roomRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    roomData = docSnap.data();
+                    updateGameStateUI();
+                }
+            });
+
+            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            unsubChat = onSnapshot(query(chatCol), (snapshot) => {
+                const messages = [];
+                snapshot.forEach(d => messages.push(d.data()));
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+                renderChatMessages(messages);
+            });
+
+            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            unsubCanvas = onSnapshot(canvasDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.action === 'clear') {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    } else if (data.action === 'draw' && (!currentUser || data.sender !== currentUser.uid)) {
+                        drawLineRemote(data.x0, data.y0, data.x1, data.y1, data.color, data.size);
+                    }
+                }
+            });
+        }
+
+        window.startNewRound = async function() {
+            if (!window.isTeacherUser) return;
+            
+            const randomWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
+            
+            const roomRef = doc(db, 'rooms', currentRoomId);
+            await updateDoc(roomRef, {
+                status: 'playing',
+                currentWord: randomWord,
+                currentDrawer: currentUser ? currentUser.uid : 'me',
+                drawerName: window.userNickname
+            });
+            
+            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
+
+            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            await addDoc(chatCol, {
+                sender: '시스템',
+                text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 맞혀보세요.`,
+                timestamp: Date.now(),
+                isSystem: true
+            });
+        }
+
+        function updateGameStateUI() {
+            const myUid = currentUser ? currentUser.uid : 'me';
+            const isMyTurn = window.isTeacherUser || (roomData.currentDrawer === myUid);
+            
+            document.getElementById('current-drawer-label').innerText = roomData.drawerName || '대기 중';
+            
+            const wordBox = document.getElementById('word-display-box');
+            if (window.isTeacherUser || isMyTurn) {
+                // 선생님 및 현재 화가만 제시어 확인 가능
+                wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
+                wordBox.classList.remove('bg-slate-100', 'text-slate-500');
+                wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
+            } else {
+                // 학생 화면에서는 절대 제시어가 보이지 않음
+                wordBox.innerText = `제시어: ??? (비밀 🤫)`;
+                wordBox.classList.add('bg-slate-100', 'text-slate-500');
+                wordBox.classList.remove('bg-amber-100', 'text-amber-800');
+            }
+
+            if (isMyTurn) {
+                document.getElementById('drawing-tools').classList.remove('pointer-events-none', 'opacity-50');
+            } else {
+                document.getElementById('drawing-tools').classList.add('pointer-events-none', 'opacity-50');
+            }
+        }
+
+        let canvas, ctx;
+        let isDrawing = false;
+        let brushColor = '#0f172a';
+        let brushSize = 5;
+        let lastX = 0, lastY = 0;
+
+        function initCanvas() {
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                canvas.dispatchEvent(mouseEvent);
+            }, { passive: false });
+
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    brushColor = e.target.dataset.color;
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-4', 'ring-purple-400'));
+                    e.target.classList.add('ring-4', 'ring-purple-400');
+                });
+            });
+
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    brushSize = parseInt(e.target.dataset.size);
+                    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('bg-purple-600', 'text-white'));
+                    e.target.classList.add('bg-purple-600', 'text-white');
+                });
+            });
+
+            document.getElementById('clear-canvas-btn').addEventListener('click', async () => {
+                const myUid = currentUser ? currentUser.uid : 'me';
+                const isMyTurn = window.isTeacherUser || (roomData.currentDrawer === myUid);
+                if (!isMyTurn) return;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+                await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
+            });
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return;
+
+            let tempCanvas = null;
+            if (canvas.width > 0 && canvas.height > 0) {
+                tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0);
+            }
+
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            if (tempCanvas) {
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        function startDraw(e) {
+            const myUid = currentUser ? currentUser.uid : 'me';
+            const isMyTurn = window.isTeacherUser || (roomData.currentDrawer === myUid);
+            if (!isMyTurn) return;
+
+            isDrawing = true;
+            const pos = getMousePos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        async function draw(e) {
+            if (!isDrawing) return;
+            const myUid = currentUser ? currentUser.uid : 'me';
+            const isMyTurn = window.isTeacherUser || (roomData.currentDrawer === myUid);
+            if (!isMyTurn) return;
+
+            const pos = getMousePos(e);
+            drawLineLocal(lastX, lastY, pos.x, pos.y, brushColor, brushSize);
+
+            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            await setDoc(canvasDocRef, {
+                action: 'draw',
+                x0: lastX,
+                y0: lastY,
+                x1: pos.x,
+                y1: pos.y,
+                color: brushColor,
+                size: brushSize,
+                sender: currentUser ? currentUser.uid : 'me',
+                timestamp: Date.now()
+            });
+
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        function drawLineLocal(x0, y0, x1, y1, color, size) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawLineRemote(x0, y0, x1, y1, color, size) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            const sender = window.userNickname || '익명';
+            let isCorrect = false;
+
+            if (roomData.currentWord && text.replace(/\s+/g, '') === roomData.currentWord.replace(/\s+/g, '')) {
+                isCorrect = true;
+            }
+
+            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            await addDoc(chatCol, {
+                sender: sender,
+                text: text,
+                timestamp: Date.now(),
+                isCorrect: isCorrect,
+                isSystem: false
+            });
+
+            if (isCorrect) {
+                await addDoc(chatCol, {
+                    sender: '정답알림',
+                    text: `🎉 ${sender}님이 정답 [${roomData.currentWord}]을(를) 맞췄습니다! 이제 ${sender}님이 다음 화가로 그림을 그려주세요!`,
+                    timestamp: Date.now() + 1,
+                    isSystem: true
+                });
+
+                const roomRef = doc(db, 'rooms', currentRoomId);
+                const newWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
+                await updateDoc(roomRef, {
+                    currentDrawer: currentUser ? currentUser.uid : 'other',
+                    drawerName: sender,
+                    currentWord: newWord
+                });
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+                await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
+            }
+        }
+
+        function renderChatMessages(messages) {
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                if (msg.isSystem) {
+                    div.className = "p-2 my-1 bg-amber-50 text-amber-800 rounded-lg text-xs font-bold text-center border border-amber-200";
+                    div.innerText = msg.text;
+                } else if (msg.isCorrect) {
+                    div.className = "p-2 my-1 bg-emerald-100 text-emerald-900 rounded-lg text-sm font-bold shadow-sm border border-emerald-300";
+                    div.innerHTML = `<span class="text-emerald-700">${msg.sender}:</span> ${msg.text} 🎯 정답!`;
+                } else {
+                    div.className = "py-1 px-2 text-sm text-slate-700 border-b border-slate-100";
+                    div.innerHTML = `<span class="font-bold text-slate-900">${msg.sender}:</span> ${escapeHtml(msg.text)}`;
+                }
+                chatBox.appendChild(div);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+            }, 3000);
+        }
+    </script>
+    
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow p-8 max-w-md w-full border border-white/50 text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-300 rounded-full blur-2xl opacity-50"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-sky-300 rounded-full blur-2xl opacity-50"></div>
+
+            <div class="relative z-10">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl text-white text-3xl shadow-lg mb-4">
+                    <i class="fa-solid fa-paintbrush"></i>
+                </div>
+                <h1 class="font-jua text-3xl text-slate-800 mb-2">알콩달콩 그림 퀴즈!</h1>
+                <p class="text-slate-500 text-sm mb-6">중학교 1학년 릴레이 캐치마인드 웹게임</p>
+
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">학생 닉네임 입력</label>
+                        <input id="nickname-input" type="text" placeholder="예: 멋진중학생" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium text-slate-800 transition">
+                    </div>
+
+                    <button id="login-btn" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-jua text-lg rounded-xl shadow-md hover:from-purple-700 hover:to-indigo-700 transition transform hover:-translate-y-0.5 active:translate-y-0">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> 학생으로 입장하기
+                    </button>
+
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-4 text-slate-400 text-xs font-bold uppercase">또는</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-2">
+                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider">선생님 전용</label>
+                        <button id="teacher-google-btn" class="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-jua text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-google text-red-500 text-base"></i> 구글 계정으로 선생님 로그인
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="hidden flex-1 flex flex-col h-full max-w-7xl mx-auto w-full p-4 gap-4">
+        
+        <!-- HEADER NAVBAR -->
+        <header class="bg-white/80 backdrop-blur-md rounded-2xl px-6 py-3 shadow-sm border border-white/60 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-lg shadow">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <div>
+                    <h2 class="font-jua text-xl text-slate-800 leading-tight">알콩달콩 릴레이 퀴즈</h2>
+                    <p class="text-xs text-slate-500">중1 필수 상식 & 교과 퀴즈 방</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div id="role-badge" class="px-3 py-1 bg-sky-500 text-white rounded-full text-xs font-jua shadow-sm">학생 참가자</div>
+                <div class="bg-slate-100 px-4 py-1.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-user text-purple-600"></i>
+                    <span id="user-display-name">홍길동</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[500px]">
+            
+            <!-- DRAWING BOARD (3 cols) -->
+            <div class="lg:col-span-3 flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 gap-3">
+                
+                <!-- GAME STATUS BAR -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">현재 화가:</span>
+                        <span id="current-drawer-label" class="font-jua text-purple-600 text-lg">대기 중</span>
+                    </div>
+
+                    <!-- PROMPT BOX: Students NEVER see this -->
+                    <div id="word-display-box" class="px-4 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                        제시어: ??? (학생 화면에서는 숨겨집니다)
+                    </div>
+
+                    <!-- TEACHER CONTROLS -->
+                    <div id="teacher-controls" class="hidden flex items-center gap-2">
+                        <button onclick="startNewRound()" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-jua text-sm rounded-xl shadow-sm transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-shuffle"></i> 랜덤 제시어 출제
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CANVAS CONTAINER -->
+                <div class="flex-1 relative bg-white rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center min-h-[350px]">
+                    <canvas id="drawing-canvas" class="w-full h-full cursor-crosshair absolute inset-0"></canvas>
+                </div>
+
+                <!-- DRAWING TOOLS -->
+                <div id="drawing-tools" class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <!-- Colors -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400">색상:</span>
+                        <button class="color-btn w-7 h-7 rounded-full bg-slate-900 ring-4 ring-purple-400 focus:outline-none transition transform hover:scale-110" data-color="#0f172a"></button>
+                        <button class="color-btn w-7 h-7 rounded-full bg-rose-500 focus:outline-none transition transform hover:scale-110" data-color="#f43f5e"></button>
+                        <button class="color-btn w-7 h-7 rounded-full bg-amber-500 focus:outline-none transition transform hover:scale-110" data-color="#f59e0b"></button>
+                        <button class="color-btn w-7 h-7 rounded-full bg-emerald-500 focus:outline-none transition transform hover:scale-110" data-color="#10b981"></button>
+                        <button class="color-btn w-7 h-7 rounded-full bg-sky-500 focus:outline-none transition transform hover:scale-110" data-color="#0ea5e9"></button>
+                        <button class="color-btn w-7 h-7 rounded-full bg-purple-500 focus:outline-none transition transform hover:scale-110" data-color="#a855f7"></button>
+                    </div>
+
+                    <!-- Sizes -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400">굵기:</span>
+                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" data-size="3">얇게</button>
+                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-purple-600 text-white transition" data-size="8">보통</button>
+                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" data-size="20">두껍게</button>
+                    </div>
+
+                    <!-- Clear -->
+                    <div>
+                        <button id="clear-canvas-btn" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-right"></i> 모두 지우기
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CHAT & GUESSING (1 col) -->
+            <div class="flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 h-[550px] lg:h-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+                    <h3 class="font-jua text-base text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-comments text-purple-500"></i> 정답 채팅창
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-medium">띄어쓰기 없이 정확히 입력!</span>
+                </div>
+
+                <!-- Chat Messages Scroll Area -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto pr-1 space-y-1 mb-3">
+                    <div class="p-2 my-1 bg-amber-50 text-amber-800 rounded-lg text-xs font-bold text-center border border-amber-200">
+                        환영합니다! 정답을 맞혀 다음 화가로 도전하세요!
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" class="flex gap-2">
+                    <input id="chat-input" type="text" placeholder="정답을 입력하세요..." class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm font-medium">
+                    <button type="submit" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm transition flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50">
+        알림 메시지
+    </div>
+
+</body>
+</html>
