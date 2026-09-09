@@ -66,6 +66,7 @@
         let unsubRoom = null;
         let unsubChat = null;
         let unsubCanvas = null;
+        let unsubParticipants = null;
 
         window.userNickname = "";
         window.isTeacherUser = false;
@@ -124,7 +125,7 @@
             }
         }
 
-        function startSession() {
+        async function startSession() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('user-display-name').innerText = window.userNickname;
@@ -140,6 +141,19 @@
             }
 
             connectToRoom();
+            registerParticipant();
+        }
+
+        async function registerParticipant() {
+            if (!currentUser) return;
+            const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants', currentUser.uid);
+            await setDoc(userRef, {
+                uid: currentUser.uid,
+                nickname: window.userNickname,
+                score: userScore,
+                isTeacher: window.isTeacherUser,
+                lastActive: Date.now()
+            }, { merge: true });
         }
 
         let roomData = {
@@ -194,6 +208,13 @@
                     }
                 }
             }, (err) => console.error("Canvas sync error:", err));
+
+            const participantsCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants');
+            unsubParticipants = onSnapshot(query(participantsCol), (snapshot) => {
+                const participants = [];
+                snapshot.forEach(d => participants.push(d.data()));
+                renderParticipantsList(participants);
+            }, (err) => console.error("Participants sync error:", err));
         }
 
         function showGameStartModal() {
@@ -225,7 +246,7 @@
             const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'chat');
             await addDoc(chatCol, {
                 sender: '시스템',
-                text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 채팅으로 맞혀보세요.`,
+                text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 채팅으로 맞혀보세요. (+30점)`,
                 timestamp: Date.now(),
                 isSystem: true
             });
@@ -252,6 +273,34 @@
             } else {
                 document.getElementById('drawing-tools').classList.add('pointer-events-none', 'opacity-50');
             }
+        }
+
+        function renderParticipantsList(participants) {
+            const container = document.getElementById('participants-list');
+            const countBadge = document.getElementById('participant-count');
+            countBadge.innerText = `${participants.length}명`;
+            
+            container.innerHTML = '';
+            // Sort by score descending
+            participants.sort((a, b) => b.score - a.score);
+
+            participants.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <div class="w-7 h-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            ${p.isTeacher ? '쌤' : p.nickname.charAt(0)}
+                        </div>
+                        <span class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nickname)} ${p.isTeacher ? '(선생님)' : ''}</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-amber-600 font-bold text-sm flex-shrink-0">
+                        <i class="fa-solid fa-star text-xs"></i>
+                        <span>${p.score}점</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
         }
 
         let canvas, ctx;
@@ -433,12 +482,20 @@
             });
 
             if (isCorrect && !window.isTeacherUser) {
-                userScore += 10;
+                userScore += 30;
                 document.getElementById('user-score-display').innerText = userScore;
+
+                // Update participant score in firestore
+                if (currentUser) {
+                    const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants', currentUser.uid);
+                    await setDoc(userRef, { score: userScore }, { merge: true });
+                }
+
+                showCorrectAnswerPopup(sender, roomData.currentWord);
 
                 await addDoc(chatCol, {
                     sender: '정답알림',
-                    text: `🎉 ${sender}님이 정답 [${roomData.currentWord}]을(를) 맞췄습니다! (+10점)`,
+                    text: `🎉 ${sender}님이 정답 [${roomData.currentWord}]을(를) 맞췄습니다! (+30점)`,
                     timestamp: Date.now() + 1,
                     isSystem: true
                 });
@@ -456,6 +513,17 @@
                     await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
                 }
             }
+        }
+
+        function showCorrectAnswerPopup(winnerName, word) {
+            const modal = document.getElementById('correct-modal');
+            document.getElementById('correct-winner-name').innerText = winnerName;
+            document.getElementById('correct-word-display').innerText = word;
+            modal.classList.remove('hidden');
+        }
+
+        window.closeCorrectModal = function() {
+            document.getElementById('correct-modal').classList.add('hidden');
         }
 
         function renderChatMessages(messages) {
@@ -564,8 +632,8 @@
         <!-- MAIN LAYOUT -->
         <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[500px]">
             
-            <!-- DRAWING BOARD (3 cols) -->
-            <div class="lg:col-span-3 flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 gap-3">
+            <!-- DRAWING BOARD (2 cols) -->
+            <div class="lg:col-span-2 flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 gap-3">
                 
                 <!-- GAME STATUS BAR -->
                 <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-100">
@@ -629,7 +697,7 @@
                     <h3 class="font-jua text-base text-slate-800 flex items-center gap-2">
                         <i class="fa-solid fa-comments text-purple-500"></i> 정답 채팅창
                     </h3>
-                    <span class="text-[11px] text-slate-400 font-medium">정답 맞히면 +10점!</span>
+                    <span class="text-[11px] text-slate-400 font-medium">정답 시 +30점!</span>
                 </div>
 
                 <!-- Chat Messages Scroll Area -->
@@ -648,20 +716,53 @@
                 </form>
             </div>
 
+            <!-- PARTICIPANTS & LIVE SCOREBOARD (1 col) -->
+            <div class="flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 h-[550px] lg:h-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
+                    <h3 class="font-jua text-base text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-purple-500"></i> 참여 학생 목록
+                    </h3>
+                    <span id="participant-count" class="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-xs rounded-full">0명</span>
+                </div>
+
+                <!-- Participants Scroll List -->
+                <div id="participants-list" class="flex-1 overflow-y-auto pr-1 space-y-2">
+                    <!-- Dynamic participants items -->
+                </div>
+            </div>
+
         </div>
 
     </div>
 
     <!-- GAME START MODAL (FOR STUDENTS) -->
     <div id="gamestart-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl canvas-shadow p-8 max-w-sm w-full text-center space-y-4 border border-white/50 animate-bounce-short">
+        <div class="bg-white rounded-3xl canvas-shadow p-8 max-w-sm w-full text-center space-y-4 border border-white/50">
             <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto shadow-lg">
                 <i class="fa-solid fa-bell"></i>
             </div>
             <h3 class="font-jua text-2xl text-slate-800">선생님이 퀴즈를 출제했어요!</h3>
-            <p class="text-slate-500 text-sm">선생님이 그리는 그림을 보고 채팅창에 빠르게 정답을 입력하여 점수를 획득하세요!</p>
+            <p class="text-slate-500 text-sm">선생님이 그리는 그림을 보고 채팅창에 빠르게 정답을 입력하여 30점을 획득하세요!</p>
             <button onclick="closeGameStartModal()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-jua text-base rounded-xl shadow transition">
                 퀴즈 시작하기! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- CORRECT ANSWER NOTIFICATION MODAL -->
+    <div id="correct-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-emerald-500 to-teal-600 rounded-3xl canvas-shadow p-8 max-w-sm w-full text-center space-y-4 text-white border border-white/20">
+            <div class="w-20 h-20 bg-white/20 backdrop-blur rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner">
+                🏆
+            </div>
+            <h3 class="font-jua text-3xl">정답자 탄생!</h3>
+            <div class="bg-white/10 rounded-2xl p-4 backdrop-blur">
+                <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">정답을 맞춘 학생</p>
+                <p id="correct-winner-name" class="font-jua text-2xl text-white">홍길동</p>
+                <div class="mt-2 text-sm text-emerald-100">제시어: <span id="correct-word-display" class="font-bold underline">컴퓨터</span></div>
+            </div>
+            <button onclick="closeCorrectModal()" class="w-full py-3.5 bg-white text-teal-700 font-jua text-base rounded-2xl shadow-lg hover:bg-emerald-50 transition">
+                확인
             </button>
         </div>
     </div>
