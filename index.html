@@ -108,6 +108,8 @@
             window.isTeacherUser = false;
             currentUser = auth.currentUser;
             startSession();
+            // 입장 즉시 참여자 목록에 등록
+            await registerParticipant();
         }
 
         window.handleGoogleLogin = async function() {
@@ -119,6 +121,8 @@
                 window.isTeacherUser = true; 
                 showToast(`구글 로그인 성공: ${window.userNickname} (선생님 모드)`);
                 startSession();
+                // 선생님 입장 즉시 참여자 목록에 등록
+                await registerParticipant();
             } catch (error) {
                 console.error("Google login error:", error);
                 showToast("구글 로그인에 실패했습니다. (도메인 승인 여부를 확인해주세요)");
@@ -235,8 +239,8 @@
             await updateDoc(roomRef, {
                 status: 'playing',
                 currentWord: randomWord,
-                currentDrawer: 'teacher',
-                drawerName: '선생님',
+                currentDrawer: currentUser ? currentUser.uid : 'teacher',
+                drawerName: window.userNickname || '선생님',
                 roundToken: Date.now()
             });
             
@@ -259,11 +263,13 @@
             
             const wordBox = document.getElementById('word-display-box');
             if (window.isTeacherUser) {
+                // 선생님 화면에서는 출제된 제시어 노출
                 wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
                 wordBox.classList.remove('bg-slate-100', 'text-slate-500');
                 wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
             } else {
-                wordBox.innerText = `제시어: ??? (비밀 🤫)`;
+                // 학생 화면에서는 비밀 유지
+                wordBox.innerText = `제시어: ${roomData.currentWord ? '??? (그림을 보고 맞혀보세요!)' : '??? (출제 대기중)'}`;
                 wordBox.classList.add('bg-slate-100', 'text-slate-500');
                 wordBox.classList.remove('bg-amber-100', 'text-amber-800');
             }
