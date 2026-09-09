@@ -43,11 +43,12 @@
 <body class="h-full flex flex-col justify-between overflow-x-hidden text-slate-700">
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'relay-draw-quiz-v4';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyA4qzfQdEBQlvMCpjCP9py0fg99ZKeyyGM",
             authDomain: "edu-2026-d000a.firebaseapp.com",
             projectId: "edu-2026-d000a",
@@ -62,7 +63,7 @@
         const googleProvider = new GoogleAuthProvider();
 
         let currentUser = null;
-        let currentRoomId = "room-main-relay-v3";
+        let currentRoomId = "room-main-relay-v4";
         let unsubRoom = null;
         let unsubChat = null;
         let unsubCanvas = null;
@@ -79,6 +80,16 @@
         ];
 
         window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization note:", err);
+            }
+
             document.getElementById('login-btn').addEventListener('click', handleStudentLogin);
             document.getElementById('teacher-google-btn').addEventListener('click', handleTeacherGoogleLogin);
             
@@ -88,20 +99,6 @@
             });
 
             initCanvas();
-
-            // Handle redirect login result if any
-            try {
-                const result = await getRedirectResult(auth);
-                if (result && result.user) {
-                    currentUser = result.user;
-                    window.userNickname = currentUser.displayName ? `${currentUser.displayName} 선생님` : "선생님";
-                    window.isTeacherUser = true;
-                    showToast("구글 계정으로 선생님 로그인 성공!");
-                    startSession();
-                }
-            } catch (err) {
-                console.error("Redirect login result error:", err);
-            }
         });
 
         window.handleStudentLogin = async function() {
@@ -112,22 +109,21 @@
             }
             window.userNickname = nickname;
             window.isTeacherUser = false;
-            
-            try {
-                await signInAnonymously(auth);
-                currentUser = auth.currentUser;
-            } catch (err) {
-                console.error("Anonymous auth error:", err);
-            }
+            currentUser = auth.currentUser;
             startSession();
         }
 
         window.handleTeacherGoogleLogin = async function() {
             try {
-                await signInWithRedirect(auth, googleProvider);
+                const result = await signInWithPopup(auth, googleProvider);
+                currentUser = result.user;
+                window.userNickname = currentUser.displayName ? `${currentUser.displayName} 선생님` : "선생님";
+                window.isTeacherUser = true;
+                showToast("구글 계정으로 선생님 로그인 성공!");
+                startSession();
             } catch (err) {
-                console.error("Google Login Redirect Error:", err);
-                showToast("구글 로그인 요청 중 오류가 발생했습니다. 파이어베이스 인증 설정을 확인해주세요.");
+                console.error("Google Login Error:", err);
+                showToast("구글 로그인 중 팝업이 차단되었거나 오류가 발생했습니다.");
             }
         }
 
@@ -156,7 +152,7 @@
         };
 
         async function connectToRoom() {
-            const roomRef = doc(db, 'rooms', currentRoomId);
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
             
             const snap = await getDoc(roomRef);
             if (!snap.exists() && window.isTeacherUser) {
@@ -175,15 +171,15 @@
                 }
             });
 
-            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'chat');
             unsubChat = onSnapshot(query(chatCol), (snapshot) => {
                 const messages = [];
                 snapshot.forEach(d => messages.push(d.data()));
                 messages.sort((a, b) => a.timestamp - b.timestamp);
                 renderChatMessages(messages);
-            });
+            }, (err) => console.error("Chat sync error:", err));
 
-            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             unsubCanvas = onSnapshot(canvasDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -193,7 +189,7 @@
                         drawLineRemote(data.x0, data.y0, data.x1, data.y1, data.color, data.size);
                     }
                 }
-            });
+            }, (err) => console.error("Canvas sync error:", err));
         }
 
         window.startNewRound = async function() {
@@ -201,7 +197,7 @@
             
             const randomWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
             
-            const roomRef = doc(db, 'rooms', currentRoomId);
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
             await updateDoc(roomRef, {
                 status: 'playing',
                 currentWord: randomWord,
@@ -209,10 +205,10 @@
                 drawerName: window.userNickname
             });
             
-            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
 
-            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'chat');
             await addDoc(chatCol, {
                 sender: '시스템',
                 text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 맞혀보세요.`,
@@ -229,12 +225,11 @@
             
             const wordBox = document.getElementById('word-display-box');
             if (window.isTeacherUser || isMyTurn) {
-                // 선생님 및 현재 출제자만 제시어 확인 가능
                 wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
                 wordBox.classList.remove('bg-slate-100', 'text-slate-500');
                 wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
             } else {
-                // 학생 화면에서는 제시어가 절대로 보이지 않음
+                // 학생 화면에서는 제시어가 절대 보이지 않음
                 wordBox.innerText = `제시어: ??? (비밀 🤫)`;
                 wordBox.classList.add('bg-slate-100', 'text-slate-500');
                 wordBox.classList.remove('bg-amber-100', 'text-amber-800');
@@ -313,7 +308,7 @@
                 if (!isMyTurn) return;
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+                const canvasDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
                 await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
             });
         }
@@ -367,7 +362,7 @@
             const pos = getMousePos(e);
             drawLineLocal(lastX, lastY, pos.x, pos.y, brushColor, brushSize);
 
-            const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             await setDoc(canvasDocRef, {
                 action: 'draw',
                 x0: lastX,
@@ -423,7 +418,7 @@
                 isCorrect = true;
             }
 
-            const chatCol = collection(db, 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'chat');
             await addDoc(chatCol, {
                 sender: sender,
                 text: text,
@@ -440,7 +435,7 @@
                     isSystem: true
                 });
 
-                const roomRef = doc(db, 'rooms', currentRoomId);
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
                 const newWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
                 await updateDoc(roomRef, {
                     currentDrawer: currentUser ? currentUser.uid : 'other',
@@ -449,7 +444,7 @@
                 });
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const canvasDocRef = doc(db, 'rooms', currentRoomId, 'canvas', 'state');
+                const canvasDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
                 await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
             }
         }
