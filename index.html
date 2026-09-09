@@ -62,7 +62,7 @@
         const googleProvider = new GoogleAuthProvider();
 
         let currentUser = null;
-        let currentRoomId = "room-main-relay-v6";
+        let currentRoomId = "room-main-relay-v7";
         let unsubRoom = null;
         let unsubChat = null;
         let unsubCanvas = null;
@@ -83,6 +83,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 await signInAnonymously(auth);
+                currentUser = auth.currentUser;
             } catch (err) {
                 console.warn("Auth initialization note:", err);
             }
@@ -106,26 +107,31 @@
             }
             window.userNickname = nickname;
             window.isTeacherUser = false;
-            currentUser = auth.currentUser;
+            
+            if (!currentUser && auth.currentUser) {
+                currentUser = auth.currentUser;
+            }
+
             startSession();
-            // 입장 즉시 참여자 목록에 등록
             await registerParticipant();
         }
 
         window.handleGoogleLogin = async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                currentUser = user;
-                window.userNickname = user.displayName || "선생님";
+                currentUser = result.user;
+                window.userNickname = currentUser.displayName || "선생님";
                 window.isTeacherUser = true; 
                 showToast(`구글 로그인 성공: ${window.userNickname} (선생님 모드)`);
                 startSession();
-                // 선생님 입장 즉시 참여자 목록에 등록
                 await registerParticipant();
             } catch (error) {
                 console.error("Google login error:", error);
-                showToast("구글 로그인에 실패했습니다. (도메인 승인 여부를 확인해주세요)");
+                showToast("구글 로그인에 실패했습니다. 익명 모드로 대체합니다.");
+                window.userNickname = "선생님(익명)";
+                window.isTeacherUser = true;
+                startSession();
+                await registerParticipant();
             }
         }
 
@@ -145,14 +151,14 @@
             }
 
             connectToRoom();
-            registerParticipant();
         }
 
         async function registerParticipant() {
             if (!currentUser) return;
-            const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants', currentUser.uid);
+            const participantId = currentUser.uid || ('user-' + Math.random().toString(36).substring(2, 9));
+            const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants', participantId);
             await setDoc(userRef, {
-                uid: currentUser.uid,
+                uid: participantId,
                 nickname: window.userNickname,
                 score: userScore,
                 isTeacher: window.isTeacherUser,
@@ -169,7 +175,7 @@
         };
 
         async function connectToRoom() {
-            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId);
+            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId);
             
             const snap = await getDoc(roomRef);
             if (!snap.exists()) {
@@ -193,7 +199,7 @@
                 }
             });
 
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
             unsubChat = onSnapshot(query(chatCol), (snapshot) => {
                 const messages = [];
                 snapshot.forEach(d => messages.push(d.data()));
@@ -201,7 +207,7 @@
                 renderChatMessages(messages);
             }, (err) => console.error("Chat sync error:", err));
 
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             unsubCanvas = onSnapshot(canvasDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -213,7 +219,7 @@
                 }
             }, (err) => console.error("Canvas sync error:", err));
 
-            const participantsCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants');
+            const participantsCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants');
             unsubParticipants = onSnapshot(query(participantsCol), (snapshot) => {
                 const participants = [];
                 snapshot.forEach(d => participants.push(d.data()));
@@ -235,7 +241,7 @@
             
             const randomWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
             
-            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId);
+            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId);
             await updateDoc(roomRef, {
                 status: 'playing',
                 currentWord: randomWord,
@@ -244,10 +250,10 @@
                 roundToken: Date.now()
             });
             
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
 
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
             await addDoc(chatCol, {
                 sender: '시스템',
                 text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 채팅으로 맞혀보세요. (+30점)`,
@@ -263,12 +269,10 @@
             
             const wordBox = document.getElementById('word-display-box');
             if (window.isTeacherUser) {
-                // 선생님 화면에서는 출제된 제시어 노출
                 wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
                 wordBox.classList.remove('bg-slate-100', 'text-slate-500');
                 wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
             } else {
-                // 학생 화면에서는 비밀 유지
                 wordBox.innerText = `제시어: ${roomData.currentWord ? '??? (그림을 보고 맞혀보세요!)' : '??? (출제 대기중)'}`;
                 wordBox.classList.add('bg-slate-100', 'text-slate-500');
                 wordBox.classList.remove('bg-amber-100', 'text-amber-800');
@@ -287,7 +291,6 @@
             countBadge.innerText = `${participants.length}명`;
             
             container.innerHTML = '';
-            // Sort by score descending
             participants.sort((a, b) => b.score - a.score);
 
             participants.forEach(p => {
@@ -296,13 +299,13 @@
                 div.innerHTML = `
                     <div class="flex items-center gap-2 overflow-hidden">
                         <div class="w-7 h-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            ${p.isTeacher ? '쌤' : p.nickname.charAt(0)}
+                            ${p.isTeacher ? '쌤' : (p.nickname ? p.nickname.charAt(0) : '?')}
                         </div>
-                        <span class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nickname)} ${p.isTeacher ? '(선생님)' : ''}</span>
+                        <span class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nickname || '익명')} ${p.isTeacher ? '(선생님)' : ''}</span>
                     </div>
                     <div class="flex items-center gap-1 text-amber-600 font-bold text-sm flex-shrink-0">
                         <i class="fa-solid fa-star text-xs"></i>
-                        <span>${p.score}점</span>
+                        <span>${p.score || 0}점</span>
                     </div>
                 `;
                 container.appendChild(div);
@@ -373,7 +376,7 @@
                 if (!window.isTeacherUser) return;
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
+                const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
                 await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
             });
         }
@@ -392,7 +395,6 @@
                 tempCtx.drawImage(canvas, 0, 0);
             }
 
-            // 고해상도 디스플레이(Retina) 지원 설정 제거 및 정확한 스케일 매핑으로 브러시 밀림 현상 해결
             canvas.width = rect.width;
             canvas.height = rect.height;
 
@@ -419,7 +421,6 @@
             lastX = pos.x;
             lastY = pos.y;
             
-            // 점을 찍었을 때 바로 그려지도록 시작점과 끝점이 같은 짧은 선분 그리기
             drawLineLocal(lastX, lastY, lastX, lastY, brushColor, brushSize);
         }
 
@@ -429,7 +430,7 @@
             const pos = getMousePos(e);
             drawLineLocal(lastX, lastY, pos.x, pos.y, brushColor, brushSize);
 
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
+            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
             await setDoc(canvasDocRef, {
                 action: 'draw',
                 x0: lastX,
@@ -485,7 +486,7 @@
                 isCorrect = true;
             }
 
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'chat');
+            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
             await addDoc(chatCol, {
                 sender: sender,
                 text: text,
@@ -498,9 +499,9 @@
                 userScore += 30;
                 document.getElementById('user-score-display').innerText = userScore;
 
-                // Update participant score in firestore
                 if (currentUser) {
-                    const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'participants', currentUser.uid);
+                    const participantId = currentUser.uid;
+                    const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants', participantId);
                     await setDoc(userRef, { score: userScore }, { merge: true });
                 }
 
@@ -512,19 +513,6 @@
                     timestamp: Date.now() + 1,
                     isSystem: true
                 });
-
-                if (window.isTeacherUser) {
-                    const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId);
-                    const newWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
-                    await updateDoc(roomRef, {
-                        currentWord: newWord,
-                        roundToken: Date.now()
-                    });
-                    
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v6', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
-                    await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
-                }
             }
         }
 
