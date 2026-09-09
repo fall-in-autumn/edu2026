@@ -44,17 +44,16 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyA-y4_CgIabLBYLNOMQCyQguXFTWNczQKo",
-            authDomain: "ethics1class-2026-8e2d7.firebaseapp.com",
-            databaseURL: "https://ethics1class-2026-8e2d7-default-rtdb.firebaseio.com",
-            projectId: "ethics1class-2026-8e2d7",
-            storageBucket: "ethics1class-2026-8e2d7.firebasestorage.app",
-            messagingSenderId: "916404306806",
-            appId: "1:916404306806:web:f5a214b6881f5c4189b057"
+            apiKey: "AIzaSyA4qzfQdEBQlvMCpjCP9py0fg99ZKeyyGM",
+            authDomain: "edu-2026-d000a.firebaseapp.com",
+            projectId: "edu-2026-d000a",
+            storageBucket: "edu-2026-d000a.firebasestorage.app",
+            messagingSenderId: "951588476004",
+            appId: "1:951588476004:web:e86a6e37a02e1cb9a3fb71"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -63,7 +62,7 @@
         const googleProvider = new GoogleAuthProvider();
 
         let currentUser = null;
-        let currentRoomId = "room-main-google-v1";
+        let currentRoomId = "room-main-relay-v3";
         let unsubRoom = null;
         let unsubChat = null;
         let unsubCanvas = null;
@@ -79,7 +78,7 @@
             "비빔밥", "떡볶이", "캥거루", "펭귄", "태양계"
         ];
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('login-btn').addEventListener('click', handleStudentLogin);
             document.getElementById('teacher-google-btn').addEventListener('click', handleTeacherGoogleLogin);
             
@@ -89,6 +88,20 @@
             });
 
             initCanvas();
+
+            // Handle redirect login result if any
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    currentUser = result.user;
+                    window.userNickname = currentUser.displayName ? `${currentUser.displayName} 선생님` : "선생님";
+                    window.isTeacherUser = true;
+                    showToast("구글 계정으로 선생님 로그인 성공!");
+                    startSession();
+                }
+            } catch (err) {
+                console.error("Redirect login result error:", err);
+            }
         });
 
         window.handleStudentLogin = async function() {
@@ -111,16 +124,10 @@
 
         window.handleTeacherGoogleLogin = async function() {
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                currentUser = result.user;
-                window.userNickname = currentUser.displayName ? `${currentUser.displayName} 선생님` : "선생님";
-                window.isTeacherUser = true;
-                
-                showToast("구글 계정으로 선생님 로그인 성공!");
-                startSession();
+                await signInWithRedirect(auth, googleProvider);
             } catch (err) {
-                console.error("Google Login Error:", err);
-                showToast("구글 로그인 실패: 팝업 차단 여부나 Firebase 설정을 확인해주세요.");
+                console.error("Google Login Redirect Error:", err);
+                showToast("구글 로그인 요청 중 오류가 발생했습니다. 파이어베이스 인증 설정을 확인해주세요.");
             }
         }
 
@@ -222,12 +229,12 @@
             
             const wordBox = document.getElementById('word-display-box');
             if (window.isTeacherUser || isMyTurn) {
-                // 선생님 및 현재 화가만 제시어 확인 가능
+                // 선생님 및 현재 출제자만 제시어 확인 가능
                 wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
                 wordBox.classList.remove('bg-slate-100', 'text-slate-500');
                 wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
             } else {
-                // 학생 화면에서는 절대 제시어가 보이지 않음
+                // 학생 화면에서는 제시어가 절대로 보이지 않음
                 wordBox.innerText = `제시어: ??? (비밀 🤫)`;
                 wordBox.classList.add('bg-slate-100', 'text-slate-500');
                 wordBox.classList.remove('bg-amber-100', 'text-amber-800');
