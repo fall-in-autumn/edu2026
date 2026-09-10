@@ -45,7 +45,7 @@
                     <button onclick="window.selectRole('teacher')" class="p-6 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-chalkboard-user text-3xl"></i>
                         <span>교사 (선생님)</span>
-                        <span class="text-xs font-normal text-indigo-200">구글 계정 로그인</span>
+                        <span class="text-xs font-normal text-indigo-200">관리자 인증</span>
                     </button>
                     <button onclick="window.selectRole('student')" class="p-6 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-users text-3xl"></i>
@@ -67,12 +67,12 @@
                     <button onclick="window.joinAsStudent()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition shadow cursor-pointer">모둠 입장하기</button>
                 </div>
 
-                <!-- Teacher Google Login Box -->
+                <!-- Teacher Login Box -->
                 <div id="teacher-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-center">
-                    <p class="text-sm text-indigo-300">구글 계정으로 교사 인증을 진행해주세요.</p>
-                    <button onclick="window.loginWithGoogle()" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold transition shadow flex items-center justify-center space-x-2 cursor-pointer">
-                        <i class="fa-brands fa-google text-red-500 text-lg"></i>
-                        <span>구글 계정으로 교사 로그인</span>
+                    <p class="text-sm text-indigo-300">교사 계정으로 인증을 진행합니다.</p>
+                    <button onclick="window.loginAsTeacher()" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold transition shadow flex items-center justify-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-chalkboard text-indigo-600 text-lg"></i>
+                        <span>교사 관리자 모드로 입장</span>
                     </button>
                 </div>
             </div>
@@ -86,11 +86,11 @@
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
                     <div>
                         <h3 class="font-bold text-lg text-indigo-300">학교 수사 현황판</h3>
-                        <p class="text-xs text-slate-400" id="game-phase-desc">교사가 말을 이동시키며 수사를 진행 중입니다.</p>
+                        <p class="text-xs text-slate-400" id="game-phase-desc">선생님이 게임을 시작하면 수사가 진행됩니다.</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center">
-                            <span class="text-xs text-slate-400 block">추리 시간</span>
+                            <span class="text-xs text-slate-400 block">수사 타이머</span>
                             <span id="timer-display" class="font-mono text-xl font-bold text-amber-400">15:00</span>
                         </div>
                     </div>
@@ -136,10 +136,15 @@
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs text-slate-300 font-semibold">비밀 정답 설정 및 카드 배부:</label>
-                            <button onclick="window.openSecretModal()" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
-                                <i class="fa-solid fa-lock mr-2"></i>비밀 정답 지정 및 카드 분배
-                            </button>
+                            <label class="text-xs text-slate-300 font-semibold">게임 시작 및 카드 배부 컨트롤:</label>
+                            <div class="flex space-x-2">
+                                <button onclick="window.startCountdownGame()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold transition text-white shadow cursor-pointer">
+                                    <i class="fa-solid fa-play mr-1"></i> 게임 시작 (카운트다운)
+                                </button>
+                                <button onclick="window.openSecretModal()" class="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
+                                    <i class="fa-solid fa-lock mr-1"></i> 정답 및 카드 배부
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,7 +162,7 @@
                     </div>
                 </div>
 
-                <!-- Digital Deduction Checklist matching exact image items -->
+                <!-- Digital Deduction Checklist -->
                 <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-4">
                     <div class="flex justify-between items-center">
                         <h4 class="font-bold text-slate-200 flex items-center">
@@ -214,6 +219,14 @@
 
     </main>
 
+    <!-- Countdown Overlay Modal -->
+    <div id="countdown-overlay" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="text-center space-y-4">
+            <div class="text-6xl md:text-8xl font-extrabold text-amber-400 animate-bounce" id="countdown-number">3</div>
+            <p class="text-xl md:text-2xl font-bold text-white">선생님이 수사 시작을 선언했습니다!</p>
+        </div>
+    </div>
+
     <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
         도덕 의리T 제작
     </footer>
@@ -221,8 +234,8 @@
     <!-- Secret Setting Modal (Teacher) -->
     <div id="secret-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-indigo-400 flex items-center"><i class="fa-solid fa-lock mr-2"></i>비밀 정답 직접 지정 및 카드 배부</h3>
-            <p class="text-xs text-slate-400">정답 조합을 선택하면 나머지 카드가 모둠별로 균등 자동 배부됩니다.</p>
+            <h3 class="text-lg font-bold text-indigo-400 flex items-center"><i class="fa-solid fa-lock mr-2"></i>비밀 정답 지정 및 카드 배부</h3>
+            <p class="text-xs text-slate-400">정답 조합을 선택하고 배부 버튼을 누르면 모든 모둠원에게 실시간으로 카드가 배부됩니다.</p>
             <div class="space-y-3 text-sm">
                 <div>
                     <label class="block font-semibold mb-1 text-slate-300">범인 정답:</label>
@@ -278,9 +291,10 @@
         </div>
     </div>
 
+    <!-- Firebase SDK Imports & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -295,12 +309,10 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-room-v6';
-        const gameDocRef = doc(db, 'game_sessions', appId);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-room-v7';
+        const gameDocRef = doc(db, 'artifacts', appId, 'public_data', 'session_state');
 
-        // Exact items matching user image with specific icons
         const suspects = [
             { name: "지수", icon: "fa-user" },
             { name: "미나미", icon: "fa-user" },
@@ -339,7 +351,7 @@
         let localGameState = {
             role: null,
             myGroup: null,
-            markerMode: 'exclude', // 'exclude' (X) or 'candidate' (O)
+            markerMode: 'exclude',
             locations: { "SNS": [1, 2, 3, 4, 5], "유튜브": [], "게임": [], "OTT": [], "Zoom": [] },
             secretEnvelope: { suspect: "지수", place: "SNS", cause: "개방성", type: "사이버 폭력" },
             groupCards: { 1: [], 2: [], 3: [], 4: [], 5: [] },
@@ -356,17 +368,17 @@
             }
         };
 
-        window.loginWithGoogle = async function() {
+        window.loginAsTeacher = async function() {
             try {
-                const result = await signInWithPopup(auth, provider);
+                await signInAnonymously(auth);
                 localGameState.role = 'teacher';
-                document.getElementById('role-display').innerText = `교사 (${result.user.displayName || '선생님'})`;
+                document.getElementById('role-display').innerText = `교사 (관리자)`;
                 document.getElementById('role-display').className = "px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-semibold";
                 document.getElementById('logout-btn').classList.remove('hidden');
                 enterGame();
             } catch (error) {
-                console.error("Google Login Error:", error);
-                alert("구글 로그인 중 오류가 발생했습니다. 브라우저 팝업 차단 여부를 확인해주세요.");
+                console.error("Teacher Login Error:", error);
+                alert("로그인 중 오류가 발생했습니다.");
             }
         };
 
@@ -388,7 +400,6 @@
         };
 
         window.logoutUser = async function() {
-            try { await signOut(auth); } catch(e) {}
             location.reload();
         };
 
@@ -421,7 +432,6 @@
         }
 
         function syncWithFirebase() {
-            // Initial document check and set if not exists
             getDoc(gameDocRef).then((docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -429,6 +439,9 @@
                     if (data.secretEnvelope) localGameState.secretEnvelope = data.secretEnvelope;
                     if (data.groupCards) localGameState.groupCards = data.groupCards;
                     if (data.exclusions) localGameState.exclusions = data.exclusions;
+                    if (data.triggerCountdown) {
+                        triggerLocalCountdown();
+                    }
                     renderBoard();
                     renderChecklists();
                     renderMyCards();
@@ -437,7 +450,6 @@
                 }
             }).catch(err => console.warn("Initial load warning:", err));
 
-            // Real-time listener for all connected clients
             onSnapshot(gameDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -446,6 +458,11 @@
                     if (data.groupCards) localGameState.groupCards = data.groupCards;
                     if (data.exclusions) localGameState.exclusions = data.exclusions;
                     
+                    if (data.triggerCountdown && data.triggerCountdown !== window.lastCountdownTrigger) {
+                        window.lastCountdownTrigger = data.triggerCountdown;
+                        triggerLocalCountdown();
+                    }
+
                     renderBoard();
                     renderChecklists();
                     renderMyCards();
@@ -512,6 +529,35 @@
             }
         };
 
+        window.startCountdownGame = async function() {
+            if (localGameState.role !== 'teacher') return;
+            try {
+                await setDoc(gameDocRef, { triggerCountdown: Date.now() }, { merge: true });
+            } catch (e) {
+                triggerLocalCountdown();
+            }
+        };
+
+        function triggerLocalCountdown() {
+            const overlay = document.getElementById('countdown-overlay');
+            const numEl = document.getElementById('countdown-number');
+            overlay.classList.remove('hidden');
+            let count = 3;
+            numEl.innerText = count;
+            
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    numEl.innerText = count;
+                } else if (count === 0) {
+                    numEl.innerText = "시작!";
+                } else {
+                    clearInterval(timer);
+                    overlay.classList.add('hidden');
+                }
+            }, 1000);
+        }
+
         function renderChecklists() {
             renderCheckboxGroup('checklist-suspects', suspects, 'suspects');
             renderCheckboxGroup('checklist-places', places, 'places');
@@ -532,7 +578,7 @@
 
             items.forEach(item => {
                 const itemKey = `${category}_${item.name}`;
-                const markState = groupMarks[itemKey]; // 'exclude' (X), 'candidate' (O), or undefined/null
+                const markState = groupMarks[itemKey];
 
                 let markBadge = '';
                 let textStyle = 'text-slate-300';
@@ -662,7 +708,7 @@
                     groupCards: newGroupCards
                 }, { merge: true });
                 window.closeSecretModal();
-                alert("비밀 정답이 지정되고 각 모둠에게 단서 카드가 공평하게 자동 배부되었습니다!");
+                alert("비밀 정답이 저장되고 모든 모둠에게 카드가 정상적으로 분배되었습니다!");
             } catch (err) {
                 console.error("Failed to distribute cards:", err);
                 alert("카드 분배 중 오류가 발생했습니다.");
