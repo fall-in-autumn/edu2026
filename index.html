@@ -86,7 +86,7 @@
                 <!-- Status Banner & Timer -->
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
                     <div>
-                        <h3 class="font-bold text-lg text-indigo-300" id="current-location-title">학교 수사 현황판</h3>
+                        <h3 class="font-bold text-lg text-indigo-300">학교 수사 현황판</h3>
                         <p class="text-xs text-slate-400" id="game-phase-desc">교사가 말을 이동시키며 수사를 진행 중입니다.</p>
                     </div>
                     <div class="flex items-center space-x-3">
@@ -302,7 +302,7 @@
         let localGameState = {
             role: null,
             myGroup: null,
-            locations: { "도서관": [1, 2], "과학실": [3], "컴퓨터실": [4], "방송실": [5], "교무실": [] },
+            locations: { "도서관": [1, 2, 3, 4, 5], "과학실": [], "컴퓨터실": [], "방송실": [], "교무실": [] },
             secretEnvelope: { suspect: suspects[0], place: places[0], cause: causes[0], type: types[0] },
             groupCards: { 1: [], 2: [], 3: [], 4: [], 5: [] }
         };
@@ -375,22 +375,26 @@
                     localGameState = { ...localGameState, ...docSnap.data() };
                     renderBoard();
                     renderMyCards();
-                } else if (auth.currentUser) {
+                } else if (auth.currentUser && localGameState.role === 'teacher') {
                     await setDoc(gameStateDocRef, localGameState);
                 }
             } catch (e) {
                 console.error("Firestore sync error:", e);
             }
 
-            onSnapshot(gameStateDocRef, (doc) => {
-                if (doc.exists()) {
-                    const data = doc.data();
-                    localGameState.locations = data.locations || localGameState.locations;
-                    localGameState.secretEnvelope = data.secretEnvelope || localGameState.secretEnvelope;
-                    localGameState.groupCards = data.groupCards || localGameState.groupCards;
+            // Real-time listener for all clients (Teacher & Students)
+            onSnapshot(gameStateDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.locations) localGameState.locations = data.locations;
+                    if (data.secretEnvelope) localGameState.secretEnvelope = data.secretEnvelope;
+                    if (data.groupCards) localGameState.groupCards = data.groupCards;
+                    
                     renderBoard();
                     renderMyCards();
                 }
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
             });
         }
 
@@ -426,12 +430,25 @@
             const gId = parseInt(document.getElementById('target-group-select').value);
             const targetLoc = document.getElementById('target-location-select').value;
 
-            for (let loc in localGameState.locations) {
-                localGameState.locations[loc] = localGameState.locations[loc].filter(id => id !== gId);
-            }
-            localGameState.locations[targetLoc].push(gId);
+            // Deep copy locations to update cleanly
+            let updatedLocations = JSON.parse(JSON.stringify(localGameState.locations));
 
-            await setDoc(gameStateDocRef, localGameState, { merge: true });
+            for (let loc in updatedLocations) {
+                updatedLocations[loc] = updatedLocations[loc].filter(id => id !== gId);
+            }
+            if (!updatedLocations[targetLoc]) {
+                updatedLocations[targetLoc] = [];
+            }
+            updatedLocations[targetLoc].push(gId);
+
+            localGameState.locations = updatedLocations;
+
+            try {
+                await setDoc(gameStateDocRef, { locations: updatedLocations }, { merge: true });
+            } catch (err) {
+                console.error("Failed to update token position:", err);
+                alert("말 이동 저장 중 오류가 발생했습니다.");
+            }
         };
 
         function renderChecklists() {
@@ -502,15 +519,13 @@
             const secCause = document.getElementById('secret-cause').value;
             const secType = document.getElementById('secret-type').value;
 
-            localGameState.secretEnvelope = { suspect: secSuspect, place: secPlace, cause: secCause, type: secType };
+            const secretEnvelope = { suspect: secSuspect, place: secPlace, cause: secCause, type: secType };
 
-            // Distribute remaining cards evenly across 5 groups without giving same card category pile overload
             const remainingSuspects = suspects.filter(s => s !== secSuspect);
             const remainingPlaces = places.filter(p => p !== secPlace);
             const remainingCauses = causes.filter(c => c !== secCause);
             const remainingTypes = types.filter(t => t !== secType);
 
-            // Shuffle pool helper
             const shuffle = (array) => array.sort(() => Math.random() - 0.5);
             shuffle(remainingSuspects);
             shuffle(remainingPlaces);
@@ -527,11 +542,20 @@
                 gIdx = gIdx % 5 + 1;
             });
 
+            localGameState.secretEnvelope = secretEnvelope;
             localGameState.groupCards = newGroupCards;
 
-            await setDoc(gameStateDocRef, localGameState, { merge: true });
-            closeSecretModal();
-            alert("정답 봉투가 설정되고 각 모둠에게 균등 단서 카드가 자동 배부되었습니다!");
+            try {
+                await setDoc(gameStateDocRef, {
+                    secretEnvelope: secretEnvelope,
+                    groupCards: newGroupCards
+                }, { merge: true });
+                closeSecretModal();
+                alert("정답 봉투가 설정되고 각 모둠에게 균등 단서 카드가 자동 배부되었습니다!");
+            } catch (err) {
+                console.error("Failed to distribute cards:", err);
+                alert("카드 분배 중 오류가 발생했습니다.");
+            }
         };
 
         window.openAccusationModal = function() {
