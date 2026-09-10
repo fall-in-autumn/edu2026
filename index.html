@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>가상공간 특별수사대 - 클루 추리 게임</title>
+    <title>가상공간 특별수사대 - 교사 관리 센터</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
@@ -11,6 +11,8 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
         body { font-family: 'Pretendard', sans-serif; }
+        .draggable-token { cursor: grab; }
+        .draggable-token:active { cursor: grabbing; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
@@ -18,280 +20,41 @@
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 text-white p-2.5 rounded-xl font-bold shadow">
-                <i class="fa-solid fa-user-secret text-xl"></i>
+                <i class="fa-solid fa-chalkboard-user text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대</h1>
-                <p class="text-xs text-slate-400">도덕 교과 연계 실시간 클루 추리 보드게임</p>
+                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대 - 교사 관리 센터</h1>
+                <p class="text-xs text-slate-400">도덕 의리T 제작 - 모둠별 수사 위치 보드 관리</p>
             </div>
         </div>
-        <div id="user-status-badge" class="flex items-center space-x-3">
-            <span class="px-3 py-1 bg-slate-700 rounded-full text-xs font-semibold text-slate-300" id="role-display">역할 선택 대기중</span>
-            <button id="logout-btn" onclick="window.logoutUser()" class="hidden text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-bold transition cursor-pointer">나가기</button>
+        <div class="flex items-center space-x-3">
+            <span class="px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-semibold">교사 관리자 모드</span>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-        <!-- Setup Screen (Role & Login) -->
-        <div id="setup-screen" class="lg:col-span-4 bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl flex flex-col items-center justify-center text-center">
-            <div class="max-w-md w-full space-y-6">
-                <div class="space-y-2">
-                    <h2 class="text-2xl font-extrabold text-indigo-400">수사대에 오신 것을 환영합니다!</h2>
-                    <p class="text-sm text-slate-300">역할을 선택하여 게임에 참여해주세요. (모두 동일한 수사 화면을 공유합니다)</p>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="window.selectRole('teacher')" class="p-6 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
-                        <i class="fa-solid fa-chalkboard-user text-3xl"></i>
-                        <span>교사 (관리자)</span>
-                        <span class="text-xs font-normal text-indigo-200">정답 및 통제 권한</span>
-                    </button>
-                    <button onclick="window.selectRole('student')" class="p-6 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
-                        <i class="fa-solid fa-users text-3xl"></i>
-                        <span>학생 (모둠)</span>
-                        <span class="text-xs font-normal text-emerald-200">모둠별 선택 참여</span>
-                    </button>
-                </div>
-
-                <!-- Student Login Box -->
-                <div id="student-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-left">
-                    <label class="block text-sm font-semibold text-slate-300">참여할 모둠을 선택하세요:</label>
-                    <select id="student-group-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500">
-                        <option value="1">1모둠 (빨강)</option>
-                        <option value="2">2모둠 (파랑)</option>
-                        <option value="3">3모둠 (초록)</option>
-                        <option value="4">4모둠 (노랑)</option>
-                        <option value="5">5모둠 (보라)</option>
-                    </select>
-                    <button onclick="window.joinAsStudent()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition shadow cursor-pointer">모둠 입장하기</button>
-                </div>
-
-                <!-- Teacher Login Box -->
-                <div id="teacher-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-center">
-                    <p class="text-sm text-indigo-300">교사 계정으로 인증을 진행합니다.</p>
-                    <button onclick="window.loginAsTeacher()" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold transition shadow flex items-center justify-center space-x-2 cursor-pointer">
-                        <i class="fa-solid fa-chalkboard text-indigo-600 text-lg"></i>
-                        <span>교사 관리자 모드로 입장</span>
-                    </button>
-                </div>
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
+        
+        <!-- Status & Instructions Banner -->
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
+            <div>
+                <h3 class="font-bold text-lg text-indigo-300"><i class="fa-solid fa-map mr-2"></i>수사 위치 보드 (드래그 앤 드롭)</h3>
+                <p class="text-xs text-slate-400">모둠 카드를 다른 가상공간 상자로 드래그하여 위치를 이동시키세요.</p>
             </div>
+            <button onclick="window.resetLocations()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-semibold text-slate-300 transition cursor-pointer">
+                <i class="fa-solid fa-rotate-right mr-1"></i> 위치 초기화 (시작점)
+            </button>
         </div>
 
-        <!-- Unified Game Interface (Teacher & Student see identical layout) -->
-        <div id="game-interface" class="hidden lg:col-span-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left & Center: Board & Controls -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Status Banner & Timer -->
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
-                    <div>
-                        <h3 class="font-bold text-lg text-indigo-300">학교 수사 현황판 (공유 화면)</h3>
-                        <p class="text-xs text-slate-400" id="game-phase-desc">모든 수사원이 같은 정보를 공유하고 있습니다.</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center">
-                            <span class="text-xs text-slate-400 block">수사 타이머</span>
-                            <span id="timer-display" class="font-mono text-xl font-bold text-amber-400">15:00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- School Map / Board Grid -->
-                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl relative">
-                    <h4 class="font-bold mb-4 text-slate-200 flex items-center justify-between">
-                        <span><i class="fa-solid fa-map text-indigo-400 mr-2"></i>가상공간 수사 위치 보드</span>
-                        <span class="text-xs font-normal text-slate-400" id="board-subtitle">* 실시간 동기화됨</span>
-                    </h4>
-
-                    <!-- Rooms Grid (5 locations) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="board-locations-grid">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
-                <!-- Teacher Controls Panel (Visible only to Teacher) -->
-                <div id="teacher-control-panel" class="hidden bg-slate-800 border border-indigo-500/50 p-6 rounded-2xl shadow-xl space-y-4">
-                    <h4 class="font-bold text-indigo-400 flex items-center">
-                        <i class="fa-solid fa-screwdriver-wrench mr-2"></i>교사 관리자 패널
-                    </h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-xs text-slate-300 font-semibold">모둠 말 위치 이동 설정:</label>
-                            <div class="flex space-x-2">
-                                <select id="target-group-select" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm flex-1 text-white">
-                                    <option value="1">1모둠 (빨강)</option>
-                                    <option value="2">2모둠 (파랑)</option>
-                                    <option value="3">3모둠 (초록)</option>
-                                    <option value="4">4모둠 (노랑)</option>
-                                    <option value="5">5모둠 (보라)</option>
-                                </select>
-                                <select id="target-location-select" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm flex-1 text-white">
-                                    <option value="SNS">SNS</option>
-                                    <option value="유튜브">유튜브</option>
-                                    <option value="게임">게임</option>
-                                    <option value="OTT">OTT</option>
-                                    <option value="Zoom">Zoom</option>
-                                </select>
-                                <button onclick="window.moveGroupToken()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-bold transition cursor-pointer">이동</button>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs text-slate-300 font-semibold">게임 시작 및 카드 배부 컨트롤:</label>
-                            <div class="flex space-x-2">
-                                <button onclick="window.startCountdownGame()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold transition text-white shadow cursor-pointer">
-                                    <i class="fa-solid fa-play mr-1"></i> 게임 시작
-                                </button>
-                                <button onclick="window.openSecretModal()" class="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
-                                    <i class="fa-solid fa-lock mr-1"></i> 정답 및 카드 배부
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Cards, Checklist & Accusation -->
-            <div class="space-y-6">
-                <!-- My Hand Cards -->
-                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-3">
-                    <h4 class="font-bold text-slate-200 flex items-center justify-between">
-                        <span><i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>보유 카드 (내 모둠)</span>
-                        <span id="my-group-badge" class="text-xs px-2 py-0.5 bg-emerald-900 text-emerald-300 rounded font-semibold">비접속</span>
-                    </h4>
-                    <div id="my-cards-container" class="space-y-2 text-sm text-slate-300">
-                        <p class="text-xs text-slate-400 italic">모둠을 선택해주세요.</p>
-                    </div>
-                </div>
-
-                <!-- Digital Deduction Checklist -->
-                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-bold text-slate-200 flex items-center">
-                            <i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>디지털 추리 기록장
-                        </h4>
-                    </div>
-                    
-                    <!-- Marker Selection Toolbar -->
-                    <div class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-700 text-xs">
-                        <span class="text-slate-400 font-semibold">마커 선택:</span>
-                        <div class="flex space-x-2">
-                            <button onclick="window.setMarkerMode('exclude')" id="marker-btn-exclude" class="px-3 py-1.5 rounded font-bold transition bg-red-600 text-white shadow cursor-pointer">
-                                ✕ 제외 (X)
-                            </button>
-                            <button onclick="window.setMarkerMode('candidate')" id="marker-btn-candidate" class="px-3 py-1.5 rounded font-bold transition bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">
-                                ✓ 후보 (O)
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4 text-xs">
-                        <div>
-                            <span class="font-semibold text-indigo-300 block mb-1.5"><i class="fa-solid fa-user-ninja mr-1"></i> 1. 범인 (인물 5명)</span>
-                            <div id="checklist-suspects" class="grid grid-cols-2 gap-1.5"></div>
-                        </div>
-                        <div>
-                            <span class="font-semibold text-indigo-300 block mb-1.5"><i class="fa-solid fa-location-crosshairs mr-1"></i> 2. 사건 장소 (가상공간 5곳)</span>
-                            <div id="checklist-places" class="grid grid-cols-2 gap-1.5"></div>
-                        </div>
-                        <div>
-                            <span class="font-semibold text-indigo-300 block mb-1.5"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 3. 사건 원인 (도덕적 문제 원인 3가지)</span>
-                            <div id="checklist-causes" class="grid grid-cols-1 gap-1.5"></div>
-                        </div>
-                        <div>
-                            <span class="font-semibold text-indigo-300 block mb-1.5"><i class="fa-solid fa-shield-halved mr-1"></i> 4. 사건 종류 (도덕적 문제 종류 5가지)</span>
-                            <div id="checklist-types" class="grid grid-cols-2 gap-1.5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Final Accusation Button -->
-                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-3">
-                    <h4 class="font-bold text-slate-200 flex items-center">
-                        <i class="fa-solid fa-gavel text-amber-400 mr-2"></i>최종 고발 (정답 제출)
-                    </h4>
-                    <p class="text-xs text-slate-400">모든 단서를 종합했다면 정답을 고발하세요!</p>
-                    <button onclick="window.openAccusationModal()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold transition shadow text-slate-900 cursor-pointer">
-                        범인 고발하기 (정답 제출)
-                    </button>
-                </div>
-            </div>
-
+        <!-- Locations Grid (Drop Targets) - Full Width Grid including 시작점 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="board-locations-grid">
+            <!-- Dynamically populated -->
         </div>
 
     </main>
 
-    <!-- Countdown Overlay Modal -->
-    <div id="countdown-overlay" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="text-center space-y-4">
-            <div class="text-6xl md:text-8xl font-extrabold text-amber-400 animate-bounce" id="countdown-number">3</div>
-            <p class="text-xl md:text-2xl font-bold text-white">수사가 시작되었습니다!</p>
-        </div>
-    </div>
-
     <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
-        도덕 의리T 제작
+        도덕 의리T 제작 - 교사 관리 대시보드
     </footer>
-
-    <!-- Secret Setting Modal (Teacher) -->
-    <div id="secret-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-indigo-400 flex items-center"><i class="fa-solid fa-lock mr-2"></i>비밀 정답 지정 및 카드 배부</h3>
-            <p class="text-xs text-slate-400">정답 조합을 선택하고 배부 버튼을 누르면 모든 모둠원에게 실시간으로 카드가 배부됩니다.</p>
-            <div class="space-y-3 text-sm">
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">범인 정답:</label>
-                    <select id="secret-suspect" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">장소 정답:</label>
-                    <select id="secret-place" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">원인 정답:</label>
-                    <select id="secret-cause" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">종류 정답:</label>
-                    <select id="secret-type" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="window.closeSecretModal()" class="px-4 py-2 bg-slate-700 rounded text-sm hover:bg-slate-600 cursor-pointer">취소</button>
-                <button onclick="window.saveSecretAndDistribute()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-bold cursor-pointer">정답 저장 및 카드 배부</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Final Accusation Modal -->
-    <div id="accusation-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-amber-400 flex items-center"><i class="fa-solid fa-gavel mr-2"></i>최종 사건 고발</h3>
-            <p class="text-xs text-slate-400">우리 모둠이 추리한 최종 정답을 입력하세요.</p>
-            <div class="space-y-3 text-sm">
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">지목 범인:</label>
-                    <select id="guess-suspect" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">지목 장소:</label>
-                    <select id="guess-place" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">지목 원인:</label>
-                    <select id="guess-cause" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1 text-slate-300">지목 종류:</label>
-                    <select id="guess-type" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="window.closeAccusationModal()" class="px-4 py-2 bg-slate-700 rounded text-sm hover:bg-slate-600 cursor-pointer">취소</button>
-                <button onclick="window.submitAccusation()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-900 rounded text-sm font-bold cursor-pointer">고발 제출하기</button>
-            </div>
-        </div>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
@@ -307,424 +70,188 @@
             appId: "1:951588476004:web:e86a6e37a02e1cb9a3fb71"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
+        let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-room-v7';
-        const gameDocRef = doc(db, 'artifacts', appId);
 
-        const suspects = [
-            { name: "지수", icon: "fa-user" },
-            { name: "미나미", icon: "fa-user" },
-            { name: "유진", icon: "fa-user" },
-            { name: "지용", icon: "fa-user" },
-            { name: "정국", icon: "fa-user" }
-        ];
         const places = [
+            { name: "시작점", icon: "fa-flag-checkered" },
             { name: "SNS", icon: "fa-share-nodes" },
             { name: "유튜브", icon: "fa-video" },
             { name: "게임", icon: "fa-gamepad" },
             { name: "OTT", icon: "fa-film" },
             { name: "Zoom", icon: "fa-tv" }
         ];
-        const causes = [
-            { name: "개방성", icon: "fa-globe" },
-            { name: "익명성", icon: "fa-user-secret" },
-            { name: "비대면성", icon: "fa-comments" }
-        ];
-        const types = [
-            { name: "사이버 폭력", icon: "fa-mobile-screen-button" },
-            { name: "사생활 침해", icon: "fa-user-lock" },
-            { name: "지식재산권 침해", icon: "fa-copyright" },
-            { name: "거짓 정보", icon: "fa-circle-info" },
-            { name: "정보 편향성", icon: "fa-chart-pie" }
-        ];
 
         const groupColors = {
-            1: { name: "1모둠 (빨강)", bg: "bg-red-500", text: "text-red-400", border: "border-red-500" },
-            2: { name: "2모둠 (파랑)", bg: "bg-blue-500", text: "text-blue-400", border: "border-blue-500" },
-            3: { name: "3모둠 (초록)", bg: "bg-emerald-500", text: "text-emerald-400", border: "border-emerald-500" },
-            4: { name: "4모둠 (노랑)", bg: "bg-amber-500", text: "text-amber-400", border: "border-amber-500" },
-            5: { name: "5모둠 (보라)", bg: "bg-purple-500", text: "text-purple-400", border: "border-purple-500" }
+            1: { name: "1모둠", bg: "bg-red-500" },
+            2: { name: "2모둠", bg: "bg-blue-500" },
+            3: { name: "3모둠", bg: "bg-emerald-500" },
+            4: { name: "4모둠", bg: "bg-amber-500" },
+            5: { name: "5모둠", bg: "bg-purple-500" }
         };
 
-        let localGameState = {
-            role: null,
-            myGroup: 1,
-            markerMode: 'exclude',
-            locations: { "SNS": [1, 2, 3, 4, 5], "유튜브": [], "게임": [], "OTT": [], "Zoom": [] },
-            secretEnvelope: { suspect: "지수", place: "SNS", cause: "개방성", type: "사이버 폭력" },
-            groupCards: { 1: [], 2: [], 3: [], 4: [], 5: [] },
-            exclusions: {}
-        };
-
-        window.selectRole = function(role) {
-            if (role === 'teacher') {
-                document.getElementById('teacher-login-box').classList.remove('hidden');
-                document.getElementById('student-login-box').classList.add('hidden');
-            } else {
-                document.getElementById('student-login-box').classList.add('hidden'); // 모둠 선택창은 바로 보거나 간소화
-                document.getElementById('student-login-box').classList.remove('hidden');
-                document.getElementById('teacher-login-box').classList.add('hidden');
+        let localState = {
+            locations: {
+                "시작점": [1, 2, 3, 4, 5],
+                "SNS": [],
+                "유튜브": [],
+                "게임": [],
+                "OTT": [],
+                "Zoom": []
             }
         };
 
-        window.loginAsTeacher = async function() {
+        let gameDocRef = null;
+
+        async function initApp() {
             try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
                 await signInAnonymously(auth);
-                localGameState.role = 'teacher';
-                document.getElementById('role-display').innerText = `교사 (관리자)`;
-                document.getElementById('role-display').className = "px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-semibold";
-                document.getElementById('logout-btn').classList.remove('hidden');
-                enterGame();
-            } catch (error) {
-                console.error("Teacher Login Error:", error);
-                alert("로그인 중 오류가 발생했습니다.");
-            }
-        };
-
-        window.joinAsStudent = async function() {
-            try {
-                await signInAnonymously(auth);
-                const grp = document.getElementById('student-group-select').value;
-                localGameState.role = 'student';
-                localGameState.myGroup = parseInt(grp);
-                document.getElementById('role-display').innerText = groupColors[grp].name;
-                document.getElementById('role-display').className = `px-3 py-1 bg-slate-800 rounded-full text-xs font-semibold ${groupColors[grp].text} border ${groupColors[grp].border}`;
-                document.getElementById('my-group-badge').innerText = groupColors[grp].name;
-                document.getElementById('logout-btn').classList.remove('hidden');
-                enterGame();
-            } catch (error) {
-                console.error("Student Login Error:", error);
-                alert("모둠 입장 중 오류가 발생했습니다.");
-            }
-        };
-
-        window.logoutUser = async function() {
-            location.reload();
-        };
-
-        window.setMarkerMode = function(mode) {
-            localGameState.markerMode = mode;
-            const btnEx = document.getElementById('marker-btn-exclude');
-            const btnCand = document.getElementById('marker-btn-candidate');
-            if (mode === 'exclude') {
-                btnEx.className = "px-3 py-1.5 rounded font-bold transition bg-red-600 text-white shadow cursor-pointer";
-                btnCand.className = "px-3 py-1.5 rounded font-bold transition bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer";
-            } else {
-                btnCand.className = "px-3 py-1.5 rounded font-bold transition bg-emerald-600 text-white shadow cursor-pointer";
-                btnEx.className = "px-3 py-1.5 rounded font-bold transition bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer";
-            }
-        };
-
-        function enterGame() {
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('game-interface').classList.remove('hidden');
-            
-            if (localGameState.role === 'teacher') {
-                document.getElementById('teacher-control-panel').classList.remove('hidden');
-            }
-
-            renderBoard();
-            renderChecklists();
-            renderMyCards();
-            populateSelectOptions();
-            syncWithFirebase();
-        }
-
-        function syncWithFirebase() {
-            getDoc(gameDocRef).then((docSnap) => {
-                if (!docSnap.exists()) {
-                    setDoc(gameDocRef, localGameState);
-                }
-            }).catch(err => console.warn("Initial load warning:", err));
-
-            onSnapshot(gameDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.locations) localGameState.locations = data.locations;
-                    if (data.secretEnvelope) localGameState.secretEnvelope = data.secretEnvelope;
-                    if (data.groupCards) localGameState.groupCards = data.groupCards;
-                    if (data.exclusions) localGameState.exclusions = data.exclusions;
-                    
-                    if (data.triggerCountdown && data.triggerCountdown !== window.lastCountdownTrigger) {
-                        window.lastCountdownTrigger = data.triggerCountdown;
-                        triggerLocalCountdown();
+                gameDocRef = doc(db, 'artifacts', appId);
+                
+                try {
+                    const docSnap = await getDoc(gameDocRef);
+                    if (!docSnap.exists()) {
+                        await setDoc(gameDocRef, localState);
+                    } else {
+                        const data = docSnap.data();
+                        if (data.locations) localState.locations = data.locations;
                     }
-
-                    renderBoard();
-                    renderChecklists();
-                    renderMyCards();
+                } catch (fetchErr) {
+                    console.warn("Offline or document fetch warning, using local state:", fetchErr);
                 }
-            }, (error) => {
-                console.error("Firestore snapshot error:", error);
-            });
+
+                renderDashboard();
+
+                try {
+                    onSnapshot(gameDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.locations) {
+                                localState.locations = data.locations;
+                                renderDashboard();
+                            }
+                        }
+                    });
+                } catch (snapErr) {
+                    console.warn("Snapshot listener setup warning:", snapErr);
+                }
+
+            } catch (err) {
+                console.warn("Initialization fallback to local mode:", err);
+                renderDashboard();
+            }
         }
 
-        window.renderBoard = function() {
+        window.renderDashboard = function() {
             const grid = document.getElementById('board-locations-grid');
             if (!grid) return;
             grid.innerHTML = '';
 
-            const placeNames = places.map(p => p.name);
-            placeNames.forEach(loc => {
-                const groupsInLoc = localGameState.locations[loc] || [];
-                let tokensHtml = groupsInLoc.map(gId => `
-                    <span class="px-2.5 py-1 rounded text-xs font-bold text-white shadow ${groupColors[gId].bg}">
-                        ${groupColors[gId].name}
-                    </span>
-                `).join('');
+            places.forEach(placeObj => {
+                const locName = placeObj.name;
+                const groupsHere = localState.locations[locName] || [];
+
+                let tokensHtml = groupsHere.map(gId => {
+                    const info = groupColors[gId];
+                    return `
+                        <div draggable="true" ondragstart="window.handleDragStart(event, ${gId})" 
+                             class="draggable-token px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md flex items-center justify-between ${info.bg} cursor-grab active:cursor-grabbing">
+                            <span><i class="fa-solid fa-users mr-1"></i>${info.name}</span>
+                            <i class="fa-solid fa-grip-vertical text-white/70 ml-1"></i>
+                        </div>
+                    `;
+                }).join('');
 
                 grid.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl flex flex-col justify-between space-y-3 shadow-inner">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-200"><i class="fa-solid fa-location-dot text-indigo-400 mr-1.5"></i>${loc}</span>
-                            <span class="text-xs text-slate-500">가상공간</span>
+                    <div ondragover="window.handleDragOver(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, '${locName}')"
+                         class="bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 transition p-3 rounded-2xl flex flex-col justify-between space-y-3 min-h-[260px] shadow-inner">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="font-bold text-slate-200 flex items-center text-sm">
+                                <i class="fa-solid ${placeObj.icon} text-indigo-400 mr-2"></i>${locName}
+                            </span>
                         </div>
-                        <div class="flex flex-wrap gap-1.5 min-h-[42px] items-center bg-slate-800/50 p-2 rounded-lg border border-slate-800">
-                            ${tokensHtml || '<span class="text-xs text-slate-500 italic">말 없음</span>'}
+                        <div class="flex flex-col gap-2.5 flex-1 justify-start">
+                            ${tokensHtml || '<div class="flex-1 flex items-center justify-center text-xs text-slate-600 italic text-center p-4">모둠 말을 이곳으로 드래그하세요</div>'}
                         </div>
                     </div>
                 `;
             });
         };
 
-        window.moveGroupToken = async function() {
-            if (localGameState.role !== 'teacher') {
-                alert("선생님만 말을 이동시킬 수 있습니다.");
-                return;
-            }
-            const gId = parseInt(document.getElementById('target-group-select').value);
-            const targetLoc = document.getElementById('target-location-select').value;
+        let draggedGroupId = null;
 
-            let updatedLocations = JSON.parse(JSON.stringify(localGameState.locations));
-
-            for (let loc in updatedLocations) {
-                updatedLocations[loc] = updatedLocations[loc].filter(id => id !== gId);
-            }
-            if (!updatedLocations[targetLoc]) {
-                updatedLocations[targetLoc] = [];
-            }
-            updatedLocations[targetLoc].push(gId);
-
-            localGameState.locations = updatedLocations;
-
-            try {
-                await setDoc(gameDocRef, { locations: updatedLocations }, { merge: true });
-                renderBoard();
-            } catch (err) {
-                console.error("Failed to update token position:", err);
-                alert("말 이동 저장 중 오류가 발생했습니다.");
-            }
+        window.handleDragStart = function(e, gId) {
+            draggedGroupId = gId;
+            e.dataTransfer.setData('text/plain', gId);
         };
 
-        window.startCountdownGame = async function() {
-            if (localGameState.role !== 'teacher') return;
-            try {
-                await setDoc(gameDocRef, { triggerCountdown: Date.now() }, { merge: true });
-            } catch (e) {
-                triggerLocalCountdown();
-            }
+        window.handleDragOver = function(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-indigo-400', 'bg-slate-800/80');
         };
 
-        function triggerLocalCountdown() {
-            const overlay = document.getElementById('countdown-overlay');
-            const numEl = document.getElementById('countdown-number');
-            overlay.classList.remove('hidden');
-            let count = 3;
-            numEl.innerText = count;
+        window.handleDragLeave = function(e) {
+            e.currentTarget.classList.remove('border-indigo-400', 'bg-slate-800/80');
+        };
+
+        window.handleDrop = async function(e, targetLoc) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-indigo-400', 'bg-slate-800/80');
             
-            const timer = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    numEl.innerText = count;
-                } else if (count === 0) {
-                    numEl.innerText = "시작!";
-                } else {
-                    clearInterval(timer);
-                    overlay.classList.add('hidden');
+            if (!draggedGroupId) return;
+            const gId = parseInt(draggedGroupId);
+
+            let newLocations = JSON.parse(JSON.stringify(localState.locations));
+
+            for (let l in newLocations) {
+                newLocations[l] = newLocations[l].filter(id => id !== gId);
+            }
+
+            if (!newLocations[targetLoc]) {
+                newLocations[targetLoc] = [];
+            }
+            newLocations[targetLoc].push(gId);
+
+            localState.locations = newLocations;
+            renderDashboard();
+
+            if (gameDocRef) {
+                try {
+                    await setDoc(gameDocRef, { locations: newLocations }, { merge: true });
+                } catch (err) {
+                    console.error("Failed to update location via drop:", err);
                 }
-            }, 1000);
-        }
-
-        function renderChecklists() {
-            renderCheckboxGroup('checklist-suspects', suspects, 'suspects');
-            renderCheckboxGroup('checklist-places', places, 'places');
-            renderCheckboxGroup('checklist-causes', causes, 'causes');
-            renderCheckboxGroup('checklist-types', types, 'types');
-        }
-
-        function renderCheckboxGroup(containerId, items, category) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            
-            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 1);
-            if (!localGameState.exclusions[myGroupKey]) {
-                localGameState.exclusions[myGroupKey] = {};
             }
-            const groupMarks = localGameState.exclusions[myGroupKey];
 
-            items.forEach(item => {
-                const itemKey = `${category}_${item.name}`;
-                const markState = groupMarks[itemKey];
+            draggedGroupId = null;
+        };
 
-                let markBadge = '';
-                let textStyle = 'text-slate-300';
-                let boxStyle = 'border-slate-700 bg-slate-900';
+        window.resetLocations = async function() {
+            let resetLocs = {
+                "시작점": [1, 2, 3, 4, 5],
+                "SNS": [],
+                "유튜브": [],
+                "게임": [],
+                "OTT": [],
+                "Zoom": []
+            };
+            localState.locations = resetLocs;
+            renderDashboard();
 
-                if (markState === 'exclude') {
-                    markBadge = '✕';
-                    textStyle = 'line-through text-slate-500';
-                    boxStyle = 'bg-red-950/70 border-red-500 text-red-400 font-bold';
-                } else if (markState === 'candidate') {
-                    markBadge = '✓';
-                    textStyle = 'font-bold text-emerald-300';
-                    boxStyle = 'bg-emerald-950/70 border-emerald-500 text-emerald-400 font-bold';
+            if (gameDocRef) {
+                try {
+                    await setDoc(gameDocRef, { locations: resetLocs }, { merge: true });
+                } catch (err) {
+                    console.error("Reset error:", err);
                 }
-
-                container.innerHTML += `
-                    <div onclick="window.toggleMarker('${itemKey}')" class="flex items-center space-x-2 p-1.5 rounded bg-slate-900/50 border border-slate-800 cursor-pointer hover:border-slate-600 transition select-none">
-                        <div class="w-5 h-5 rounded border ${boxStyle} flex items-center justify-center text-xs">
-                            ${markBadge}
-                        </div>
-                        <i class="fa-solid ${item.icon} ${markState ? 'text-slate-500' : 'text-indigo-400'} text-xs"></i>
-                        <span class="truncate ${textStyle}">${item.name}</span>
-                    </div>
-                `;
-            });
-        }
-
-        window.toggleMarker = async function(itemKey) {
-            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 1);
-            if (!localGameState.exclusions[myGroupKey]) {
-                localGameState.exclusions[myGroupKey] = {};
-            }
-
-            const currentMark = localGameState.exclusions[myGroupKey][itemKey];
-            const currentMode = localGameState.markerMode;
-
-            if (currentMark === currentMode) {
-                delete localGameState.exclusions[myGroupKey][itemKey];
-            } else {
-                localGameState.exclusions[myGroupKey][itemKey] = currentMode;
-            }
-            
-            renderChecklists();
-
-            try {
-                await setDoc(gameDocRef, { exclusions: localGameState.exclusions }, { merge: true });
-            } catch (err) {
-                console.error("Failed to sync marker state:", err);
             }
         };
 
-        window.renderMyCards = function() {
-            const container = document.getElementById('my-cards-container');
-            if (!container) return;
-            
-            const groupToCheck = localGameState.role === 'teacher' ? 1 : localGameState.myGroup;
-            document.getElementById('my-group-badge').innerText = groupColors[groupToCheck].name;
-
-            const cards = localGameState.groupCards[groupToCheck] || [];
-            if (cards.length === 0) {
-                container.innerHTML = `<p class="text-xs text-amber-400 italic">아직 카드가 배부되지 않았습니다.</p>`;
-                return;
-            }
-            container.innerHTML = cards.map(c => `
-                <div class="bg-slate-900 border border-slate-700 p-2 rounded flex items-center space-x-2 text-xs">
-                    <i class="fa-solid fa-shield text-emerald-400"></i>
-                    <span class="font-medium text-slate-200">${c}</span>
-                </div>
-            `).join('');
-        };
-
-        function populateSelectOptions() {
-            populateOptions('secret-suspect', suspects.map(s => s.name));
-            populateOptions('secret-place', places.map(p => p.name));
-            populateOptions('secret-cause', causes.map(c => c.name));
-            populateOptions('secret-type', types.map(t => t.name));
-
-            populateOptions('guess-suspect', suspects.map(s => s.name));
-            populateOptions('guess-place', places.map(p => p.name));
-            populateOptions('guess-cause', causes.map(c => c.name));
-            populateOptions('guess-type', types.map(t => t.name));
-        }
-
-        function populateOptions(elementId, items) {
-            const select = document.getElementById(elementId);
-            if (!select) return;
-            select.innerHTML = items.map(i => `<option value="${i}">${i}</option>`).join('');
-        }
-
-        window.openSecretModal = function() { document.getElementById('secret-modal').classList.remove('hidden'); };
-        window.closeSecretModal = function() { document.getElementById('secret-modal').classList.add('hidden'); };
-        
-        window.saveSecretAndDistribute = async function() {
-            if (localGameState.role !== 'teacher') return;
-            
-            const secSuspect = document.getElementById('secret-suspect').value;
-            const secPlace = document.getElementById('secret-place').value;
-            const secCause = document.getElementById('secret-cause').value;
-            const secType = document.getElementById('secret-type').value;
-
-            const secretEnvelope = { suspect: secSuspect, place: secPlace, cause: secCause, type: secType };
-
-            const sList = suspects.map(s => s.name).filter(s => s !== secSuspect);
-            const pList = places.map(p => p.name).filter(p => p !== secPlace);
-            const cList = causes.map(c => c.name).filter(c => c !== secCause);
-            const tList = types.map(t => t.name).filter(t => t !== secType);
-
-            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
-            shuffle(sList); shuffle(pList); shuffle(cList); shuffle(tList);
-
-            let newGroupCards = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-            let allRemainingPool = [...sList, ...pList, ...cList, ...tList];
-            shuffle(allRemainingPool);
-
-            let gIdx = 1;
-            allRemainingPool.forEach(card => {
-                newGroupCards[gIdx].push(card);
-                gIdx = gIdx % 5 + 1;
-            });
-
-            localGameState.secretEnvelope = secretEnvelope;
-            localGameState.groupCards = newGroupCards;
-
-            try {
-                await setDoc(gameDocRef, {
-                    secretEnvelope: secretEnvelope,
-                    groupCards: newGroupCards
-                }, { merge: true });
-                window.closeSecretModal();
-                alert("비밀 정답이 저장되고 모든 모둠에게 카드가 정상적으로 분배되었습니다!");
-            } catch (err) {
-                console.error("Failed to distribute cards:", err);
-                alert("카드 분배 중 오류가 발생했습니다.");
-            }
-        };
-
-        window.openAccusationModal = function() {
-            document.getElementById('accusation-modal').classList.remove('hidden');
-        };
-        window.closeAccusationModal = function() { document.getElementById('accusation-modal').classList.add('hidden'); };
-        
-        window.submitAccusation = function() {
-            const s = document.getElementById('guess-suspect').value;
-            const p = document.getElementById('guess-place').value;
-            const c = document.getElementById('guess-cause').value;
-            const t = document.getElementById('guess-type').value;
-
-            const secret = localGameState.secretEnvelope;
-            if (s === secret.suspect && p === secret.place && c === secret.cause && t === secret.type) {
-                alert(`🎉 정답입니다! 사건을 완벽하게 해결했습니다!`);
-                window.closeAccusationModal();
-            } else {
-                alert(`❌ 아쉽습니다! 지목하신 내용 중 오답이 포함되어 있습니다.`);
-                window.closeAccusationModal();
-            }
-        };
+        initApp();
     </script>
 </body>
 </html>
