@@ -1,51 +1,269 @@
 <!DOCTYPE html>
-<html lang="ko" class="h-full">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>알콩달콩 릴레이 그림 퀴즈!</title>
-    <!-- Tailwind CSS -->
+    <title>가상공간 특별수사대 - 클루 추리 게임</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Jua & Noto Sans KR -->
-    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans KR"', 'sans-serif'],
-                        jua: ['"Jua"', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fdf4ff',
-                            100: '#fae8ff',
-                            500: '#d946ef',
-                            650: '#a21caf',
-                            700: '#86198f',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(135deg, #fbcfe8 0%, #e0e7ff 50%, #bae6fd 100%); min-height: 100vh; }
-        .font-jua { font-family: 'Jua', sans-serif; }
-        .canvas-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
     </style>
 </head>
-<body class="h-full flex flex-col justify-between overflow-x-hidden text-slate-700">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold shadow">
+                <i class="fa-solid fa-user-secret text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대</h1>
+                <p class="text-xs text-slate-400">도덕 교과 연계 실시간 추리 보드게임</p>
+            </div>
+        </div>
+        <div id="user-status-badge" class="flex items-center space-x-3">
+            <span class="px-3 py-1 bg-slate-700 rounded-full text-xs font-semibold text-slate-300" id="role-display">역할 선택 대기중</span>
+            <button id="logout-btn" onclick="logoutUser()" class="hidden text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-bold transition">나가기</button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Initial Role & Setup Screen -->
+        <div id="setup-screen" class="lg:col-span-4 bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl flex flex-col items-center justify-center text-center">
+            <div class="max-w-md w-full space-y-6">
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-extrabold text-indigo-400">수사대에 오신 것을 환영합니다!</h2>
+                    <p class="text-sm text-slate-300">역할을 선택하여 게임에 참여해주세요.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="selectRole('teacher')" class="p-6 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
+                        <i class="fa-solid fa-chalkboard-user text-3xl"></i>
+                        <span>교사 (선생님)</span>
+                        <span class="text-xs font-normal text-indigo-200">구글 계정 로그인 필수</span>
+                    </button>
+                    <button onclick="selectRole('student')" class="p-6 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
+                        <i class="fa-solid fa-users text-3xl"></i>
+                        <span>학생 (모둠)</span>
+                        <span class="text-xs font-normal text-emerald-200">모둠별 선택 참여</span>
+                    </button>
+                </div>
+
+                <!-- Student Login Box -->
+                <div id="student-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-left">
+                    <label class="block text-sm font-semibold text-slate-300">참여할 모둠을 선택하세요:</label>
+                    <select id="student-group-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-emerald-500">
+                        <option value="1">1모둠 (빨강)</option>
+                        <option value="2">2모둠 (파랑)</option>
+                        <option value="3">3모둠 (초록)</option>
+                        <option value="4">4모둠 (노랑)</option>
+                        <option value="5">5모둠 (보라)</option>
+                    </select>
+                    <button onclick="joinAsStudent()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition shadow cursor-pointer">모둠 입장하기</button>
+                </div>
+
+                <!-- Teacher Google Login Box -->
+                <div id="teacher-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-center">
+                    <p class="text-sm text-indigo-300">교사 인증을 위해 구글 계정으로 로그인해주세요.</p>
+                    <button onclick="loginWithGoogle()" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold transition shadow flex items-center justify-center space-x-2 cursor-pointer">
+                        <i class="fa-brands fa-google text-red-500 text-lg"></i>
+                        <span>구글 계정으로 교사 로그인</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Main Interface (Hidden initially) -->
+        <div id="game-interface" class="hidden lg:col-span-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left & Center: Board & Controls -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Status Banner & Timer -->
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
+                    <div>
+                        <h3 class="font-bold text-lg text-indigo-300" id="current-location-title">학교 수사 현황판</h3>
+                        <p class="text-xs text-slate-400" id="game-phase-desc">교사가 말을 이동시키며 수사를 진행 중입니다.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center">
+                            <span class="text-xs text-slate-400 block">남은 수사 시간</span>
+                            <span id="timer-display" class="font-mono text-xl font-bold text-amber-400">15:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- School Map / Board Grid -->
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl relative">
+                    <h4 class="font-bold mb-4 text-slate-200 flex items-center justify-between">
+                        <span><i class="fa-solid fa-map text-indigo-400 mr-2"></i>학교 수사 위치 보드</span>
+                        <span class="text-xs font-normal text-slate-400">* 교사만 위치 이동 가능</span>
+                    </h4>
+
+                    <!-- School Rooms Grid (5 locations) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="board-locations-grid">
+                        <!-- Location items populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Teacher Controls (Visible only for Teacher) -->
+                <div id="teacher-control-panel" class="hidden bg-slate-800 border border-indigo-500/50 p-6 rounded-2xl shadow-xl space-y-4">
+                    <h4 class="font-bold text-indigo-400 flex items-center">
+                        <i class="fa-solid fa-screwdriver-wrench mr-2"></i>교사 관리자 패널
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-300 font-semibold">모둠 말 위치 이동 설정:</label>
+                            <div class="flex space-x-2">
+                                <select id="target-group-select" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm flex-1 text-white">
+                                    <option value="1">1모둠 (빨강)</option>
+                                    <option value="2">2모둠 (파랑)</option>
+                                    <option value="3">3모둠 (초록)</option>
+                                    <option value="4">4모둠 (노랑)</option>
+                                    <option value="5">5모둠 (보라)</option>
+                                </select>
+                                <select id="target-location-select" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm flex-1 text-white">
+                                    <option value="도서관">도서관</option>
+                                    <option value="과학실">과학실</option>
+                                    <option value="컴퓨터실">컴퓨터실</option>
+                                    <option value="방송실">방송실</option>
+                                    <option value="교무실">교무실</option>
+                                </select>
+                                <button onclick="moveGroupToken()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-bold transition cursor-pointer">이동</button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-300 font-semibold">정답 카드 설정 (비밀 봉투):</label>
+                            <button onclick="openSecretModal()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
+                                <i class="fa-solid fa-lock mr-2"></i>정답 봉투 지정하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Student Deduction Sheet & Cards -->
+            <div class="space-y-6">
+                <!-- My Hand Cards / Distributed Clues -->
+                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-3">
+                    <h4 class="font-bold text-slate-200 flex items-center justify-between">
+                        <span><i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>우리 모둠 보유 카드</span>
+                        <span id="my-group-badge" class="text-xs px-2 py-0.5 bg-emerald-900 text-emerald-300 rounded font-semibold">비접속</span>
+                    </h4>
+                    <div id="my-cards-container" class="space-y-2 text-sm text-slate-300">
+                        <p class="text-xs text-slate-400 italic">로그인 후 배부된 카드가 표시됩니다.</p>
+                    </div>
+                </div>
+
+                <!-- Digital Deduction Checklist (Clue Sheet) -->
+                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-4">
+                    <h4 class="font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>디지털 추리 기록장
+                    </h4>
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <span class="font-semibold text-indigo-300 block mb-1">1. 범인 (5명)</span>
+                            <div id="checklist-suspects" class="grid grid-cols-2 gap-1"></div>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-indigo-300 block mb-1">2. 사건 장소 (5곳)</span>
+                            <div id="checklist-places" class="grid grid-cols-2 gap-1"></div>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-indigo-300 block mb-1">3. 사건 원인 (3가지)</span>
+                            <div id="checklist-causes" class="grid grid-cols-1 gap-1"></div>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-indigo-300 block mb-1">4. 사건 종류 (6가지)</span>
+                            <div id="checklist-types" class="grid grid-cols-2 gap-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Accusation Button -->
+                <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-3">
+                    <h4 class="font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-gavel text-amber-400 mr-2"></i>최종 고발 (정답 제출)
+                    </h4>
+                    <p class="text-xs text-slate-400">모든 단서를 종합했다면 정답을 고발하세요!</p>
+                    <button onclick="openAccusationModal()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold transition shadow text-slate-900 cursor-pointer">
+                        범인 고발하기 (정답 제출)
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Secret Setting Modal (Teacher) -->
+    <div id="secret-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-indigo-400">정답 봉투 설정 (선생님 전용)</h3>
+            <p class="text-xs text-slate-400">비밀리에 은닉될 정답 조합을 직접 선택하세요.</p>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-semibold mb-1">범인 정답:</label>
+                    <select id="secret-suspect" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">장소 정답:</label>
+                    <select id="secret-place" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">원인 정답:</label>
+                    <select id="secret-cause" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">종류 정답:</label>
+                    <select id="secret-type" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeSecretModal()" class="px-4 py-2 bg-slate-700 rounded text-sm cursor-pointer">취소</button>
+                <button onclick="saveSecretAndDistribute()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-bold cursor-pointer">저장 및 카드 배부</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Accusation Modal -->
+    <div id="accusation-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-amber-400">최종 사건 고발</h3>
+            <p class="text-xs text-slate-400">우리 모둠이 추리한 최종 정답을 입력하세요.</p>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-semibold mb-1">지목 범인:</label>
+                    <select id="guess-suspect" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">지목 장소:</label>
+                    <select id="guess-place" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">지목 원인:</label>
+                    <select id="guess-cause" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">지목 종류:</label>
+                    <select id="guess-type" class="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white"></select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeAccusationModal()" class="px-4 py-2 bg-slate-700 rounded text-sm cursor-pointer">취소</button>
+                <button onclick="submitAccusation()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-900 rounded text-sm font-bold cursor-pointer">고발 제출하기</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-        import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4qzfQdEBQlvMCpjCP9py0fg99ZKeyyGM",
@@ -57,721 +275,261 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-        let currentUser = null;
-        let currentRoomId = "room-main-relay-v7";
-        let unsubRoom = null;
-        let unsubChat = null;
-        let unsubCanvas = null;
-        let unsubParticipants = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-special-investigation';
+        // FIX: Ensure even number of segments for Firestore doc reference (collection/document)
+        const gameStateDocRef = doc(db, 'game_sessions', appId);
 
-        window.userNickname = "";
-        window.isTeacherUser = false;
-        let userScore = 0;
+        const suspects = ["학생회장 민수", "도서부장 서연", "방송반 지호", "체육부장 현우", "자율동아리 유나"];
+        const places = ["도서관", "과학실", "컴퓨터실", "방송실", "교무실"];
+        const causes = ["호기심과 장난", "오해와 다툼", "책임감 부족"];
+        const types = ["사이버 불링", "저작권 침해", "개인정보 유출", "허위사실 유포", "게임 내 사기", "공유기 해킹"];
 
-        const middleSchoolPrompts = [
-            "세종대왕", "거북선", "독도", "피타고라스", "광합성", 
-            "인공지능", "스마트폰", "경복궁", "DNA", "삼일절", 
-            "축구공", "블랙홀", "지진", "화산폭발", "피아노", 
-            "에펠탑", "자유의여신상", "모나리자", "축구선수", "오케스트라",
-            "비빔밥", "떡볶이", "캥거루", "펭귄", "태양계"
-        ];
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await signInAnonymously(auth);
-                currentUser = auth.currentUser;
-            } catch (err) {
-                console.warn("Auth initialization note:", err);
-            }
-
-            document.getElementById('login-btn').addEventListener('click', handleStudentLogin);
-            document.getElementById('google-login-btn').addEventListener('click', handleGoogleLogin);
-            
-            document.getElementById('chat-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                sendChatMessage();
-            });
-
-            initCanvas();
-        });
-
-        window.handleStudentLogin = async function() {
-            const nickname = document.getElementById('nickname-input').value.trim();
-            if (!nickname) {
-                showToast("닉네임을 입력해주세요!");
-                return;
-            }
-            window.userNickname = nickname;
-            window.isTeacherUser = false;
-            
-            if (!currentUser && auth.currentUser) {
-                currentUser = auth.currentUser;
-            }
-
-            startSession();
-            await registerParticipant();
-        }
-
-        window.handleGoogleLogin = async function() {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                currentUser = result.user;
-                window.userNickname = currentUser.displayName || "선생님";
-                window.isTeacherUser = true; 
-                showToast(`구글 로그인 성공: ${window.userNickname} (선생님 모드)`);
-                startSession();
-                await registerParticipant();
-            } catch (error) {
-                console.error("Google login error:", error);
-                showToast("구글 로그인에 실패했습니다. 익명 모드로 대체합니다.");
-                window.userNickname = "선생님(익명)";
-                window.isTeacherUser = true;
-                startSession();
-                await registerParticipant();
-            }
-        }
-
-        async function startSession() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('user-display-name').innerText = window.userNickname;
-            document.getElementById('user-score-display').innerText = userScore;
-            
-            if (window.isTeacherUser) {
-                document.getElementById('teacher-controls').classList.remove('hidden');
-                document.getElementById('role-badge').innerText = "선생님 (출제자)";
-                document.getElementById('role-badge').className = "px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-jua shadow-sm";
-            } else {
-                document.getElementById('role-badge').innerText = "학생 참가자";
-                document.getElementById('role-badge').className = "px-3 py-1 bg-sky-500 text-white rounded-full text-xs font-jua shadow-sm";
-            }
-
-            connectToRoom();
-        }
-
-        async function registerParticipant() {
-            if (!currentUser) return;
-            const participantId = currentUser.uid || ('user-' + Math.random().toString(36).substring(2, 9));
-            const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants', participantId);
-            await setDoc(userRef, {
-                uid: participantId,
-                nickname: window.userNickname,
-                score: userScore,
-                isTeacher: window.isTeacherUser,
-                lastActive: Date.now()
-            }, { merge: true });
-        }
-
-        let roomData = {
-            status: 'waiting', 
-            currentDrawer: '',
-            drawerName: '',
-            currentWord: '',
-            roundToken: 0
+        const groupColors = {
+            1: { name: "1모둠 (빨강)", bg: "bg-red-500", text: "text-red-400", border: "border-red-500" },
+            2: { name: "2모둠 (파랑)", bg: "bg-blue-500", text: "text-blue-400", border: "border-blue-500" },
+            3: { name: "3모둠 (초록)", bg: "bg-emerald-500", text: "text-emerald-400", border: "border-emerald-500" },
+            4: { name: "4모둠 (노랑)", bg: "bg-amber-500", text: "text-amber-400", border: "border-amber-500" },
+            5: { name: "5모둠 (보라)", bg: "bg-purple-500", text: "text-purple-400", border: "border-purple-500" }
         };
 
-        async function connectToRoom() {
-            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId);
+        let localGameState = {
+            role: null,
+            myGroup: null,
+            locations: { "도서관": [1, 2], "과학실": [3], "컴퓨터실": [4], "방송실": [5], "교무실": [] },
+            secretEnvelope: { suspect: suspects[0], place: places[0], cause: causes[0], type: types[0] },
+            groupCards: {
+                1: ["도서부장 서연", "과학실", "호기심과 장난"],
+                2: ["방송반 지호", "컴퓨터실", "사이버 불링"],
+                3: ["체육부장 현우", "방송실", "저작권 침해"],
+                4: ["자율동아리 유나", "교무실", "개인정보 유출"],
+                5: ["학생회장 민수", "도서관", "허위사실 유포"]
+            }
+        };
+
+        window.selectRole = function(role) {
+            if (role === 'teacher') {
+                document.getElementById('teacher-login-box').classList.remove('hidden');
+                document.getElementById('student-login-box').classList.add('hidden');
+            } else {
+                document.getElementById('student-login-box').classList.remove('hidden');
+                document.getElementById('teacher-login-box').classList.add('hidden');
+            }
+        };
+
+        window.loginWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                localGameState.role = 'teacher';
+                document.getElementById('role-display').innerText = `교사 (${result.user.displayName || '선생님'})`;
+                document.getElementById('role-display').className = "px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-semibold";
+                document.getElementById('logout-btn').classList.remove('hidden');
+                enterGame();
+            } catch (error) {
+                console.error("Google Login Error:", error);
+                alert("구글 로그인 중 오류가 발생했습니다. 팝업 차단을 확인해주세요.");
+            }
+        };
+
+        window.joinAsStudent = async function() {
+            try {
+                await signInAnonymously(auth);
+                const grp = document.getElementById('student-group-select').value;
+                localGameState.role = 'student';
+                localGameState.myGroup = parseInt(grp);
+                document.getElementById('role-display').innerText = groupColors[grp].name;
+                document.getElementById('role-display').className = `px-3 py-1 bg-slate-800 rounded-full text-xs font-semibold ${groupColors[grp].text} border ${groupColors[grp].border}`;
+                document.getElementById('my-group-badge').innerText = groupColors[grp].name;
+                document.getElementById('logout-btn').classList.remove('hidden');
+                enterGame();
+            } catch (error) {
+                console.error("Student Login Error:", error);
+                alert("학생 입장 중 오류가 발생했습니다.");
+            }
+        };
+
+        window.logoutUser = async function() {
+            await signOut(auth);
+            location.reload();
+        };
+
+        function enterGame() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-interface').classList.remove('hidden');
             
-            const snap = await getDoc(roomRef);
-            if (!snap.exists()) {
-                await setDoc(roomRef, {
-                    status: 'waiting',
-                    currentDrawer: 'teacher',
-                    drawerName: '선생님',
-                    currentWord: '',
-                    roundToken: 0
-                });
+            if (localGameState.role === 'teacher') {
+                document.getElementById('teacher-control-panel').classList.remove('hidden');
             }
 
-            unsubRoom = onSnapshot(roomRef, (docSnap) => {
+            renderBoard();
+            renderChecklists();
+            renderMyCards();
+            populateSelectOptions();
+            syncWithFirebase();
+        }
+
+        async function syncWithFirebase() {
+            try {
+                const docSnap = await getDoc(gameStateDocRef);
                 if (docSnap.exists()) {
-                    const newData = docSnap.data();
-                    if (newData.roundToken !== roomData.roundToken && newData.status === 'playing' && !window.isTeacherUser) {
-                        showGameStartModal();
-                    }
-                    roomData = newData;
-                    updateGameStateUI();
+                    localGameState = { ...localGameState, ...docSnap.data() };
+                    renderBoard();
+                    renderMyCards();
+                } else if (auth.currentUser) {
+                    await setDoc(gameStateDocRef, localGameState);
+                }
+            } catch (e) {
+                console.error("Firestore sync error:", e);
+            }
+
+            onSnapshot(gameStateDocRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    localGameState.locations = data.locations || localGameState.locations;
+                    localGameState.secretEnvelope = data.secretEnvelope || localGameState.secretEnvelope;
+                    localGameState.groupCards = data.groupCards || localGameState.groupCards;
+                    renderBoard();
+                    renderMyCards();
                 }
             });
-
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
-            unsubChat = onSnapshot(query(chatCol), (snapshot) => {
-                const messages = [];
-                snapshot.forEach(d => messages.push(d.data()));
-                messages.sort((a, b) => a.timestamp - b.timestamp);
-                renderChatMessages(messages);
-            }, (err) => console.error("Chat sync error:", err));
-
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
-            unsubCanvas = onSnapshot(canvasDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.action === 'clear') {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    } else if (data.action === 'draw' && (!currentUser || data.sender !== currentUser.uid)) {
-                        drawLineRemote(data.x0, data.y0, data.x1, data.y1, data.color, data.size);
-                    }
-                }
-            }, (err) => console.error("Canvas sync error:", err));
-
-            const participantsCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants');
-            unsubParticipants = onSnapshot(query(participantsCol), (snapshot) => {
-                const participants = [];
-                snapshot.forEach(d => participants.push(d.data()));
-                renderParticipantsList(participants);
-            }, (err) => console.error("Participants sync error:", err));
         }
 
-        function showGameStartModal() {
-            const modal = document.getElementById('gamestart-modal');
-            modal.classList.remove('hidden');
-        }
+        window.renderBoard = function() {
+            const grid = document.getElementById('board-locations-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
 
-        window.closeGameStartModal = function() {
-            document.getElementById('gamestart-modal').classList.add('hidden');
-        }
+            places.forEach(loc => {
+                const groupsInLoc = localGameState.locations[loc] || [];
+                let tokensHtml = groupsInLoc.map(gId => `
+                    <span class="px-2 py-1 rounded text-xs font-bold text-white shadow ${groupColors[gId].bg}">
+                        ${groupColors[gId].name}
+                    </span>
+                `).join('');
 
-        window.startNewRound = async function() {
-            if (!window.isTeacherUser) return;
-            
-            const randomWord = middleSchoolPrompts[Math.floor(Math.random() * middleSchoolPrompts.length)];
-            
-            const roomRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId);
-            await updateDoc(roomRef, {
-                status: 'playing',
-                currentWord: randomWord,
-                currentDrawer: currentUser ? currentUser.uid : 'teacher',
-                drawerName: window.userNickname || '선생님',
-                roundToken: Date.now()
-            });
-            
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
-            await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
-
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
-            await addDoc(chatCol, {
-                sender: '시스템',
-                text: `🎨 새로운 퀴즈가 시작되었습니다! 그림을 보고 정답을 채팅으로 맞혀보세요. (+30점)`,
-                timestamp: Date.now(),
-                isSystem: true
-            });
-        }
-
-        function updateGameStateUI() {
-            const isMyTurn = window.isTeacherUser;
-            
-            document.getElementById('current-drawer-label').innerText = roomData.drawerName || '선생님';
-            
-            const wordBox = document.getElementById('word-display-box');
-            if (window.isTeacherUser) {
-                wordBox.innerText = `[출제자 전용] 제시어: ${roomData.currentWord || '(출제 대기)'}`;
-                wordBox.classList.remove('bg-slate-100', 'text-slate-500');
-                wordBox.classList.add('bg-amber-100', 'text-amber-800', 'font-bold');
-            } else {
-                wordBox.innerText = `제시어: ${roomData.currentWord ? '??? (그림을 보고 맞혀보세요!)' : '??? (출제 대기중)'}`;
-                wordBox.classList.add('bg-slate-100', 'text-slate-500');
-                wordBox.classList.remove('bg-amber-100', 'text-amber-800');
-            }
-
-            if (isMyTurn) {
-                document.getElementById('drawing-tools').classList.remove('pointer-events-none', 'opacity-50');
-            } else {
-                document.getElementById('drawing-tools').classList.add('pointer-events-none', 'opacity-50');
-            }
-        }
-
-        function renderParticipantsList(participants) {
-            const container = document.getElementById('participants-list');
-            const countBadge = document.getElementById('participant-count');
-            countBadge.innerText = `${participants.length}명`;
-            
-            container.innerHTML = '';
-            participants.sort((a, b) => b.score - a.score);
-
-            participants.forEach(p => {
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100";
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 overflow-hidden">
-                        <div class="w-7 h-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                            ${p.isTeacher ? '쌤' : (p.nickname ? p.nickname.charAt(0) : '?')}
+                grid.innerHTML += `
+                    <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl flex flex-col justify-between space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-200"><i class="fa-solid fa-location-dot text-indigo-400 mr-1.5"></i>${loc}</span>
+                            <span class="text-xs text-slate-500">구역</span>
                         </div>
-                        <span class="text-sm font-bold text-slate-800 truncate">${escapeHtml(p.nickname || '익명')} ${p.isTeacher ? '(선생님)' : ''}</span>
-                    </div>
-                    <div class="flex items-center gap-1 text-amber-600 font-bold text-sm flex-shrink-0">
-                        <i class="fa-solid fa-star text-xs"></i>
-                        <span>${p.score || 0}점</span>
+                        <div class="flex flex-wrap gap-1.5 min-h-[40px] items-center bg-slate-800/50 p-2 rounded-lg border border-slate-800">
+                            ${tokensHtml || '<span class="text-xs text-slate-500 italic">말 없음</span>'}
+                        </div>
                     </div>
                 `;
-                container.appendChild(div);
             });
-        }
+        };
 
-        let canvas, ctx;
-        let isDrawing = false;
-        let brushColor = '#0f172a';
-        let brushSize = 5;
-        let lastX = 0, lastY = 0;
+        window.moveGroupToken = async function() {
+            if (localGameState.role !== 'teacher') return;
+            const gId = parseInt(document.getElementById('target-group-select').value);
+            const targetLoc = document.getElementById('target-location-select').value;
 
-        function initCanvas() {
-            canvas = document.getElementById('drawing-canvas');
-            ctx = canvas.getContext('2d');
-            
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-            canvas.addEventListener('mouseout', stopDraw);
-
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            }, { passive: false });
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            }, { passive: false });
-
-            canvas.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                const mouseEvent = new MouseEvent('mouseup', {});
-                canvas.dispatchEvent(mouseEvent);
-            }, { passive: false });
-
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    brushColor = e.target.dataset.color;
-                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-4', 'ring-purple-400'));
-                    e.target.classList.add('ring-4', 'ring-purple-400');
-                });
-            });
-
-            document.querySelectorAll('.size-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    brushSize = parseInt(e.target.dataset.size);
-                    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('bg-purple-600', 'text-white'));
-                    e.target.classList.add('bg-purple-600', 'text-white');
-                });
-            });
-
-            document.getElementById('clear-canvas-btn').addEventListener('click', async () => {
-                if (!window.isTeacherUser) return;
-
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
-                await setDoc(canvasDocRef, { action: 'clear', timestamp: Date.now() });
-            });
-        }
-
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            const rect = container.getBoundingClientRect();
-            if (rect.width <= 0 || rect.height <= 0) return;
-
-            let tempCanvas = null;
-            if (canvas.width > 0 && canvas.height > 0) {
-                tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(canvas, 0, 0);
+            for (let loc in localGameState.locations) {
+                localGameState.locations[loc] = localGameState.locations[loc].filter(id => id !== gId);
             }
+            localGameState.locations[targetLoc].push(gId);
 
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            await setDoc(gameStateDocRef, localGameState, { merge: true });
+        };
 
-            if (tempCanvas) {
-                ctx.drawImage(tempCanvas, 0, 0);
-            }
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+        function renderChecklists() {
+            renderCheckboxGroup('checklist-suspects', suspects);
+            renderCheckboxGroup('checklist-places', places);
+            renderCheckboxGroup('checklist-causes', causes);
+            renderCheckboxGroup('checklist-types', types);
         }
 
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return { 
-                x: e.clientX - rect.left, 
-                y: e.clientY - rect.top 
-            };
-        }
-
-        function startDraw(e) {
-            if (!window.isTeacherUser) return;
-
-            isDrawing = true;
-            const pos = getMousePos(e);
-            lastX = pos.x;
-            lastY = pos.y;
-            
-            drawLineLocal(lastX, lastY, lastX, lastY, brushColor, brushSize);
-        }
-
-        async function draw(e) {
-            if (!isDrawing || !window.isTeacherUser) return;
-
-            const pos = getMousePos(e);
-            drawLineLocal(lastX, lastY, pos.x, pos.y, brushColor, brushSize);
-
-            const canvasDocRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'canvas', 'state');
-            await setDoc(canvasDocRef, {
-                action: 'draw',
-                x0: lastX,
-                y0: lastY,
-                x1: pos.x,
-                y1: pos.y,
-                color: brushColor,
-                size: brushSize,
-                sender: currentUser ? currentUser.uid : 'me',
-                timestamp: Date.now()
+        function renderCheckboxGroup(containerId, items) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            items.forEach(item => {
+                container.innerHTML += `
+                    <label class="flex items-center space-x-2 text-slate-300 cursor-pointer hover:text-white">
+                        <input type="checkbox" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                        <span class="truncate">${item}</span>
+                    </label>
+                `;
             });
-
-            lastX = pos.x;
-            lastY = pos.y;
         }
 
-        function stopDraw() {
-            isDrawing = false;
-        }
-
-        function drawLineLocal(x0, y0, x1, y1, color, size) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-        }
-
-        function drawLineRemote(x0, y0, x1, y1, color, size) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-        }
-
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-            input.value = '';
-
-            const sender = window.userNickname || '익명';
-            let isCorrect = false;
-
-            if (roomData.currentWord && text.replace(/\s+/g, '') === roomData.currentWord.replace(/\s+/g, '')) {
-                isCorrect = true;
+        window.renderMyCards = function() {
+            const container = document.getElementById('my-cards-container');
+            if (!container) return;
+            if (localGameState.role === 'teacher') {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic">교사는 전체 카드 배부 및 비밀 정답을 관리합니다.</p>`;
+                return;
             }
-
-            const chatCol = collection(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'chat');
-            await addDoc(chatCol, {
-                sender: sender,
-                text: text,
-                timestamp: Date.now(),
-                isCorrect: isCorrect,
-                isSystem: false
-            });
-
-            if (isCorrect && !window.isTeacherUser) {
-                userScore += 30;
-                document.getElementById('user-score-display').innerText = userScore;
-
-                if (currentUser) {
-                    const participantId = currentUser.uid;
-                    const userRef = doc(db, 'artifacts', 'relay-draw-quiz-v7', 'public', 'data', 'rooms', currentRoomId, 'participants', participantId);
-                    await setDoc(userRef, { score: userScore }, { merge: true });
-                }
-
-                showCorrectAnswerPopup(sender, roomData.currentWord);
-
-                await addDoc(chatCol, {
-                    sender: '정답알림',
-                    text: `🎉 ${sender}님이 정답 [${roomData.currentWord}]을(를) 맞췄습니다! (+30점)`,
-                    timestamp: Date.now() + 1,
-                    isSystem: true
-                });
-            }
-        }
-
-        function showCorrectAnswerPopup(winnerName, word) {
-            const modal = document.getElementById('correct-modal');
-            document.getElementById('correct-winner-name').innerText = winnerName;
-            document.getElementById('correct-word-display').innerText = word;
-            modal.classList.remove('hidden');
-        }
-
-        window.closeCorrectModal = function() {
-            document.getElementById('correct-modal').classList.add('hidden');
-        }
-
-        function renderChatMessages(messages) {
-            const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = '';
-            
-            messages.forEach(msg => {
-                const div = document.createElement('div');
-                if (msg.isSystem) {
-                    div.className = "p-2 my-1 bg-amber-50 text-amber-800 rounded-lg text-xs font-bold text-center border border-amber-200";
-                    div.innerText = msg.text;
-                } else if (msg.isCorrect) {
-                    div.className = "p-2 my-1 bg-emerald-100 text-emerald-900 rounded-lg text-sm font-bold shadow-sm border border-emerald-300";
-                    div.innerHTML = `<span class="text-emerald-700">${msg.sender}:</span> ${msg.text} 🎯 정답!`;
-                } else {
-                    div.className = "py-1 px-2 text-sm text-slate-700 border-b border-slate-100";
-                    div.innerHTML = `<span class="font-bold text-slate-900">${msg.sender}:</span> ${escapeHtml(msg.text)}`;
-                }
-                chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            toast.innerText = msg;
-            toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
-            }, 3000);
-        }
-    </script>
-    
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="flex-1 flex items-center justify-center p-4">
-        <div class="bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow p-8 max-w-md w-full border border-white/50 text-center relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-300 rounded-full blur-2xl opacity-50"></div>
-            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-sky-300 rounded-full blur-2xl opacity-50"></div>
-
-            <div class="relative z-10">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl text-white text-3xl shadow-lg mb-4">
-                    <i class="fa-solid fa-paintbrush"></i>
+            const cards = localGameState.groupCards[localGameState.myGroup] || [];
+            container.innerHTML = cards.map(c => `
+                <div class="bg-slate-900 border border-slate-700 p-2 rounded flex items-center space-x-2 text-xs">
+                    <i class="fa-solid fa-shield text-emerald-400"></i>
+                    <span class="font-medium text-slate-200">${c}</span>
                 </div>
-                <h1 class="font-jua text-3xl text-slate-800 mb-2">알콩달콩 그림 퀴즈!</h1>
-                <p class="text-slate-500 text-sm mb-6">중학교 1학년 릴레이 캐치마인드 웹게임</p>
+            `).join('');
+        };
 
-                <div class="space-y-4 text-left">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">학생 닉네임 입력</label>
-                        <input id="nickname-input" type="text" placeholder="예: 멋진중학생" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium text-slate-800 transition">
-                    </div>
+        function populateSelectOptions() {
+            populateOptions('secret-suspect', suspects);
+            populateOptions('secret-place', places);
+            populateOptions('secret-cause', causes);
+            populateOptions('secret-type', types);
 
-                    <button id="login-btn" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-jua text-lg rounded-xl shadow-md hover:from-purple-700 hover:to-indigo-700 transition transform hover:-translate-y-0.5 active:translate-y-0">
-                        <i class="fa-solid fa-right-to-bracket mr-2"></i> 학생으로 입장하기
-                    </button>
+            populateOptions('guess-suspect', suspects);
+            populateOptions('guess-place', places);
+            populateOptions('guess-cause', causes);
+            populateOptions('guess-type', types);
+        }
 
-                    <div class="relative flex py-2 items-center">
-                        <div class="flex-grow border-t border-slate-200"></div>
-                        <span class="flex-shrink mx-4 text-slate-400 text-xs font-bold uppercase">또는</span>
-                        <div class="flex-grow border-t border-slate-200"></div>
-                    </div>
+        function populateOptions(elementId, items) {
+            const select = document.getElementById(elementId);
+            if (!select) return;
+            select.innerHTML = items.map(i => `<option value="${i}">${i}</option>`).join('');
+        }
 
-                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 space-y-2">
-                        <label class="block text-xs font-bold text-amber-700 uppercase tracking-wider">교사/출제자 로그인</label>
-                        <button id="google-login-btn" class="w-full py-3 bg-white hover:bg-slate-50 border border-amber-300 text-slate-700 font-jua text-sm rounded-xl shadow-sm transition flex items-center justify-center gap-2">
-                            <i class="fa-brands fa-google text-red-500 text-base"></i> 구글 계정으로 로그인 (선생님)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- GAME SCREEN -->
-    <div id="game-screen" class="hidden flex-1 flex flex-col h-full max-w-7xl mx-auto w-full p-4 gap-4">
+        window.openSecretModal = function() { document.getElementById('secret-modal').classList.remove('hidden'); };
+        window.closeSecretModal = function() { document.getElementById('secret-modal').classList.add('hidden'); };
         
-        <!-- HEADER NAVBAR -->
-        <header class="bg-white/80 backdrop-blur-md rounded-2xl px-6 py-3 shadow-sm border border-white/60 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-lg shadow">
-                    <i class="fa-solid fa-palette"></i>
-                </div>
-                <div>
-                    <h2 class="font-jua text-xl text-slate-800 leading-tight">알콩달콩 릴레이 퀴즈</h2>
-                    <p class="text-xs text-slate-500">중1 필수 상식 & 교과 퀴즈 방</p>
-                </div>
-            </div>
+        window.saveSecretAndDistribute = async function() {
+            localGameState.secretEnvelope.suspect = document.getElementById('secret-suspect').value;
+            localGameState.secretEnvelope.place = document.getElementById('secret-place').value;
+            localGameState.secretEnvelope.cause = document.getElementById('secret-cause').value;
+            localGameState.secretEnvelope.type = document.getElementById('secret-type').value;
 
-            <div class="flex items-center space-x-3">
-                <div id="role-badge" class="px-3 py-1 bg-sky-500 text-white rounded-full text-xs font-jua shadow-sm">학생 참가자</div>
-                <div class="bg-slate-100 px-4 py-1.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-user text-purple-600"></i>
-                    <span id="user-display-name">홍길동</span>
-                </div>
-                <div class="bg-amber-100 px-3.5 py-1.5 rounded-xl border border-amber-200 text-sm font-bold text-amber-800 flex items-center gap-1.5">
-                    <i class="fa-solid fa-star text-amber-500"></i>
-                    <span>점수: <span id="user-score-display">0</span>점</span>
-                </div>
-            </div>
-        </header>
+            await setDoc(gameStateDocRef, localGameState, { merge: true });
+            closeSecretModal();
+            alert("정답 봉투가 설정되고 실시간 반영되었습니다!");
+        };
 
-        <!-- MAIN LAYOUT -->
-        <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[500px]">
-            
-            <!-- DRAWING BOARD (2 cols) -->
-            <div class="lg:col-span-2 flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 gap-3">
-                
-                <!-- GAME STATUS BAR -->
-                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-100">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">현재 화가:</span>
-                        <span id="current-drawer-label" class="font-jua text-purple-600 text-lg">선생님</span>
-                    </div>
+        window.openAccusationModal = function() {
+            if (localGameState.role === 'teacher') {
+                alert("선생님은 최종 고발을 할 수 없습니다.");
+                return;
+            }
+            document.getElementById('accusation-modal').classList.remove('hidden');
+        };
+        window.closeAccusationModal = function() { document.getElementById('accusation-modal').classList.add('hidden'); };
+        
+        window.submitAccusation = function() {
+            const s = document.getElementById('guess-suspect').value;
+            const p = document.getElementById('guess-place').value;
+            const c = document.getElementById('guess-cause').value;
+            const t = document.getElementById('guess-type').value;
 
-                    <!-- PROMPT BOX -->
-                    <div id="word-display-box" class="px-4 py-1.5 rounded-xl text-sm font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                        제시어: ??? (학생 화면에서는 숨겨집니다)
-                    </div>
-
-                    <!-- TEACHER CONTROLS -->
-                    <div id="teacher-controls" class="hidden flex items-center gap-2">
-                        <button onclick="startNewRound()" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-jua text-sm rounded-xl shadow-sm transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-shuffle"></i> 랜덤 제시어 출제
-                        </button>
-                    </div>
-                </div>
-
-                <!-- CANVAS CONTAINER -->
-                <div class="flex-1 relative bg-white rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center min-h-[350px]">
-                    <canvas id="drawing-canvas" class="w-full h-full cursor-crosshair absolute inset-0"></canvas>
-                </div>
-
-                <!-- DRAWING TOOLS -->
-                <div id="drawing-tools" class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 pointer-events-none opacity-50">
-                    <!-- Colors -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-400">색상:</span>
-                        <button class="color-btn w-7 h-7 rounded-full bg-slate-900 ring-4 ring-purple-400 focus:outline-none transition transform hover:scale-110" data-color="#0f172a"></button>
-                        <button class="color-btn w-7 h-7 rounded-full bg-rose-500 focus:outline-none transition transform hover:scale-110" data-color="#f43f5e"></button>
-                        <button class="color-btn w-7 h-7 rounded-full bg-amber-500 focus:outline-none transition transform hover:scale-110" data-color="#f59e0b"></button>
-                        <button class="color-btn w-7 h-7 rounded-full bg-emerald-500 focus:outline-none transition transform hover:scale-110" data-color="#10b981"></button>
-                        <button class="color-btn w-7 h-7 rounded-full bg-sky-500 focus:outline-none transition transform hover:scale-110" data-color="#0ea5e9"></button>
-                        <button class="color-btn w-7 h-7 rounded-full bg-purple-500 focus:outline-none transition transform hover:scale-110" data-color="#a855f7"></button>
-                    </div>
-
-                    <!-- Sizes -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-400">굵기:</span>
-                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" data-size="3">얇게</button>
-                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-purple-600 text-white transition" data-size="8">보통</button>
-                        <button class="size-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700 hover:bg-slate-300 transition" data-size="20">두껍게</button>
-                    </div>
-
-                    <!-- Clear -->
-                    <div>
-                        <button id="clear-canvas-btn" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition flex items-center gap-1">
-                            <i class="fa-solid fa-rotate-right"></i> 모두 지우기
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- CHAT & GUESSING (1 col) -->
-            <div class="flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 h-[550px] lg:h-auto">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
-                    <h3 class="font-jua text-base text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-comments text-purple-500"></i> 정답 채팅창
-                    </h3>
-                    <span class="text-[11px] text-slate-400 font-medium">정답 시 +30점!</span>
-                </div>
-
-                <!-- Chat Messages Scroll Area -->
-                <div id="chat-messages" class="flex-1 overflow-y-auto pr-1 space-y-1 mb-3">
-                    <div class="p-2 my-1 bg-amber-50 text-amber-800 rounded-lg text-xs font-bold text-center border border-amber-200">
-                        환영합니다! 선생님이 그림을 그리면 정답을 맞혀보세요!
-                    </div>
-                </div>
-
-                <!-- Chat Input Form -->
-                <form id="chat-form" class="flex gap-2">
-                    <input id="chat-input" type="text" placeholder="정답을 입력하세요..." class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm font-medium">
-                    <button type="submit" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm transition flex items-center justify-center">
-                        <i class="fa-solid fa-paper-plane text-sm"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- PARTICIPANTS & LIVE SCOREBOARD (1 col) -->
-            <div class="flex flex-col bg-white/90 backdrop-blur-md rounded-3xl canvas-shadow border border-white/50 p-4 h-[550px] lg:h-auto">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-2">
-                    <h3 class="font-jua text-base text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-users text-purple-500"></i> 참여 학생 목록
-                    </h3>
-                    <span id="participant-count" class="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-xs rounded-full">0명</span>
-                </div>
-
-                <!-- Participants Scroll List -->
-                <div id="participants-list" class="flex-1 overflow-y-auto pr-1 space-y-2">
-                    <!-- Dynamic participants items -->
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- GAME START MODAL (FOR STUDENTS) -->
-    <div id="gamestart-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl canvas-shadow p-8 max-w-sm w-full text-center space-y-4 border border-white/50">
-            <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto shadow-lg">
-                <i class="fa-solid fa-bell"></i>
-            </div>
-            <h3 class="font-jua text-2xl text-slate-800">선생님이 퀴즈를 출제했어요!</h3>
-            <p class="text-slate-500 text-sm">선생님이 그리는 그림을 보고 채팅창에 빠르게 정답을 입력하여 30점을 획득하세요!</p>
-            <button onclick="closeGameStartModal()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-jua text-base rounded-xl shadow transition">
-                퀴즈 시작하기! 🚀
-            </button>
-        </div>
-    </div>
-
-    <!-- CORRECT ANSWER NOTIFICATION MODAL -->
-    <div id="correct-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-gradient-to-b from-emerald-500 to-teal-600 rounded-3xl canvas-shadow p-8 max-w-sm w-full text-center space-y-4 text-white border border-white/20">
-            <div class="w-20 h-20 bg-white/20 backdrop-blur rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-inner">
-                🏆
-            </div>
-            <h3 class="font-jua text-3xl">정답자 탄생!</h3>
-            <div class="bg-white/10 rounded-2xl p-4 backdrop-blur">
-                <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">정답을 맞춘 학생</p>
-                <p id="correct-winner-name" class="font-jua text-2xl text-white">홍길동</p>
-                <div class="mt-2 text-sm text-emerald-100">제시어: <span id="correct-word-display" class="font-bold underline">컴퓨터</span></div>
-            </div>
-            <button onclick="closeCorrectModal()" class="w-full py-3.5 bg-white text-teal-700 font-jua text-base rounded-2xl shadow-lg hover:bg-emerald-50 transition">
-                확인
-            </button>
-        </div>
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50">
-        알림 메시지
-    </div>
-
+            const secret = localGameState.secretEnvelope;
+            if (s === secret.suspect && p === secret.place && c === secret.cause && t === secret.type) {
+                alert(`🎉 정답입니다! ${groupColors[localGameState.myGroup].name}이(가) 사건을 완벽하게 해결했습니다!`);
+                closeAccusationModal();
+            } else {
+                alert(`❌ 아쉽습니다! 지목하신 내용 중 오답이 포함되어 있습니다.`);
+                closeAccusationModal();
+            }
+        };
+    </script>
 </body>
 </html>
