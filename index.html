@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>가상공간 특별수사대 - 신호등 타이머 센터</title>
+    <title>신호등 타이머 센터</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
@@ -13,46 +13,51 @@
         body { font-family: 'Pretendard', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+<body id="app-body" class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between transition-colors duration-300">
 
-    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
+    <header id="app-header" class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm transition-colors duration-300">
         <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 text-white p-2.5 rounded-xl font-bold shadow">
+            <div class="bg-blue-600 text-white p-2.5 rounded-2xl font-bold shadow-sm">
                 <i class="fa-solid fa-traffic-light text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대 - 신호등 타이머 센터</h1>
-                <p class="text-xs text-slate-400">도덕 의리T 제작 - 대형 신호등 타이머 및 활동 안내 관리</p>
+                <h1 id="header-title" class="text-xl font-extrabold tracking-tight text-slate-900 transition-colors duration-300">신호등 타이머 센터</h1>
+                <p id="header-subtitle" class="text-xs text-slate-500 font-medium transition-colors duration-300">신호등 타이머 및 활동 안내</p>
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <span class="px-3 py-1 bg-indigo-900 text-indigo-300 rounded-full text-xs font-semibold">교사 관리자 모드</span>
+            <!-- Theme Toggle Button -->
+            <button onclick="window.toggleTheme()" id="theme-toggle-btn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-semibold border border-slate-200 transition flex items-center space-x-1.5 cursor-pointer">
+                <i id="theme-icon" class="fa-solid fa-moon"></i>
+                <span id="theme-text">다크모드</span>
+            </button>
+            <span id="creator-badge" class="px-3.5 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200 transition-colors duration-300">Created by fallinautumn</span>
         </div>
     </header>
 
     <main class="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col items-center justify-center space-y-8">
         
         <!-- Horizontal/Vertical Traffic Light Visual Panel -->
-        <div class="bg-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-6 w-full max-w-2xl">
+        <div id="panel-traffic" class="bg-white border border-slate-200 p-8 rounded-3xl shadow-xl flex flex-col items-center space-y-6 w-full max-w-2xl transition-colors duration-300">
             
             <div class="w-full flex justify-between items-center">
                 <div class="space-y-1">
-                    <span class="text-sm font-bold text-slate-300 uppercase tracking-widest">현재 활동 신호등 상태</span>
-                    <div id="current-mode-label" class="text-3xl font-extrabold text-emerald-400 tracking-wide">🟢 추리중 모드</div>
+                    <span id="label-current-mode-title" class="text-base font-bold text-slate-700 uppercase tracking-widest transition-colors duration-300">현재 활동 신호등 상태</span>
+                    <div id="current-mode-label" class="text-3xl font-extrabold text-emerald-600 tracking-wide">🟢 추리중 모드</div>
                 </div>
                 <!-- Layout Direction Toggle Buttons -->
-                <div class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-700 space-x-1">
-                    <button onclick="window.setTrafficLightLayout('horizontal')" id="layout-btn-horizontal" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow">
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 space-x-1 transition-colors duration-300" id="layout-toggle-container">
+                    <button onclick="window.setTrafficLightLayout('horizontal')" id="layout-btn-horizontal" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-sm">
                         <i class="fa-solid fa-ellipsis"></i> 가로
                     </button>
-                    <button onclick="window.setTrafficLightLayout('vertical')" id="layout-btn-vertical" class="px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white">
+                    <button onclick="window.setTrafficLightLayout('vertical')" id="layout-btn-vertical" class="px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
                         <i class="fa-solid fa-ellipsis-vertical"></i> 세로
                     </button>
                 </div>
             </div>
 
             <!-- Huge Traffic Light Housing (Dynamic Flex Container) -->
-            <div id="traffic-light-housing" class="bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300">
+            <div id="traffic-light-housing" class="bg-slate-900 px-8 py-6 rounded-3xl border-4 border-slate-300 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300">
                 
                 <!-- Green Bulb (추리중) -->
                 <button onclick="window.setTrafficLightMode('추리중')" title="추리중 모드로 전환 (초록불)" 
@@ -74,45 +79,44 @@
 
             </div>
 
-            <p class="text-xs text-slate-400 text-center italic">
+            <p id="traffic-desc" class="text-xs text-slate-500 text-center font-medium transition-colors duration-300">
                 * 신호등 동그라미를 클릭하면 모드가 전환되며, 상단 버튼으로 가로/세로 배치를 바꿀 수 있습니다.
             </p>
         </div>
 
-        <!-- Timer & Controls Panel -->
-        <div class="bg-slate-800 border border-slate-700 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6">
+        <div id="panel-timer" class="bg-white border border-slate-200 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6 transition-colors duration-300">
             
             <div class="flex justify-between items-center">
-                <span class="text-sm font-bold text-slate-300 uppercase tracking-wider">수사 제한 타이머</span>
-                <div id="signal-badge" class="px-4 py-2 bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md">
-                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                <span id="label-timer-title" class="text-base font-bold text-slate-700 uppercase tracking-wider transition-colors duration-300">활동 타이머</span>
+                <div id="signal-badge" class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                     <span id="signal-text" class="tracking-wide">추리중</span>
                 </div>
             </div>
 
             <!-- Big Timer Display -->
-            <div id="timer-display" class="text-6xl font-mono font-black text-cyan-400 bg-slate-900 py-6 rounded-2xl border border-slate-700 text-center shadow-inner tracking-wider">
+            <div id="timer-display" class="text-6xl font-mono font-black text-blue-600 bg-slate-50 py-6 rounded-2xl border border-slate-200 text-center shadow-inner tracking-wider transition-colors duration-300">
                 05:00
             </div>
 
             <!-- Timer Action Buttons -->
             <div class="grid grid-cols-3 gap-3">
-                <button onclick="window.startTimer()" class="py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                <button onclick="window.startTimer()" class="py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white transition shadow-sm cursor-pointer flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-play"></i><span>시작</span>
                 </button>
-                <button onclick="window.pauseTimer()" class="py-3 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-white transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                <button onclick="window.pauseTimer()" class="py-3 bg-amber-500 hover:bg-amber-400 rounded-xl font-bold text-white transition shadow-sm cursor-pointer flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-pause"></i><span>일시정지</span>
                 </button>
-                <button onclick="window.resetTimer()" class="py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-slate-300 transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                <button onclick="window.resetTimer()" class="py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition shadow-sm cursor-pointer flex items-center justify-center space-x-2" id="reset-btn">
                     <i class="fa-solid fa-rotate-right"></i><span>초기화</span>
                 </button>
             </div>
 
             <!-- Timer Preset Setting -->
-            <div class="pt-4 border-t border-slate-700 flex items-center space-x-3">
-                <span class="text-xs font-semibold text-slate-400 whitespace-nowrap">시간 설정 (분):</span>
-                <input type="number" id="timer-input-min" value="5" min="1" max="60" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-center text-white font-bold text-sm outline-none focus:border-indigo-500">
-                <button onclick="window.setTimerMinutes()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl font-bold text-white text-xs transition shadow cursor-pointer">
+            <div class="pt-4 border-t border-slate-100 flex items-center space-x-3 transition-colors duration-300" id="timer-setting-row">
+                <span id="label-set-time" class="text-xs font-semibold text-slate-500 whitespace-nowrap transition-colors duration-300">시간 설정 (분):</span>
+                <input type="number" id="timer-input-min" value="5" min="1" max="60" class="w-24 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-slate-800 font-bold text-sm outline-none focus:border-blue-500 transition-colors duration-300">
+                <button onclick="window.setTimerMinutes()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-bold text-white text-xs transition shadow-sm cursor-pointer">
                     시간 적용하기
                 </button>
             </div>
@@ -121,8 +125,8 @@
 
     </main>
 
-    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
-        도덕 의리T 제작 - 신호등 타이머 센터
+    <footer id="app-footer" class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium transition-colors duration-300">
+        도덕의리T의 신호등 타이머 센터
     </footer>
 
     <script type="module">
@@ -147,7 +151,8 @@
                 remainingSeconds: 300,
                 isRunning: false,
                 mode: "추리중",
-                layout: "horizontal"
+                layout: "horizontal",
+                theme: "light"
             }
         };
 
@@ -222,19 +227,26 @@
 
             const currentMode = localState.timer?.mode || "추리중";
             const currentLayout = localState.timer?.layout || "horizontal";
+            const currentTheme = localState.timer?.theme || "light";
+
+            applyThemeUI(currentTheme);
 
             if (signalText) signalText.innerText = currentMode;
 
             // Apply layout styling
             if (housing) {
                 if (currentLayout === 'vertical') {
-                    housing.className = "bg-slate-950 px-6 py-8 rounded-3xl border-4 border-slate-700 flex flex-col items-center justify-center space-y-6 shadow-2xl transition-all duration-300";
-                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
-                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white";
+                    housing.className = currentTheme === 'dark' 
+                        ? "bg-slate-950 px-6 py-8 rounded-3xl border-4 border-slate-700 flex flex-col items-center justify-center space-y-6 shadow-2xl transition-all duration-300"
+                        : "bg-slate-900 px-6 py-8 rounded-3xl border-4 border-slate-300 flex flex-col items-center justify-center space-y-6 shadow-2xl transition-all duration-300";
+                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-sm";
+                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
                 } else {
-                    housing.className = "bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300";
-                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
-                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white";
+                    housing.className = currentTheme === 'dark'
+                        ? "bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300"
+                        : "bg-slate-900 px-8 py-6 rounded-3xl border-4 border-slate-300 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300";
+                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-sm";
+                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white";
                 }
             }
 
@@ -245,36 +257,109 @@
 
             if (currentMode === '회의중') {
                 if (badge) {
-                    badge.className = "px-4 py-2 bg-red-950/90 text-red-300 border border-red-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-400 animate-pulse shrink-0"></span><span class="tracking-wide">회의중</span>`;
+                    badge.className = currentTheme === 'dark'
+                        ? "px-4 py-2 bg-red-950/60 text-red-300 border border-red-800 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm"
+                        : "px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-500 animate-pulse shrink-0"></span><span class="tracking-wide">회의중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🔴 회의중 모드";
-                    modeLabel.className = "text-3xl font-extrabold text-red-400 tracking-wide";
+                    modeLabel.className = currentTheme === 'dark' ? "text-3xl font-extrabold text-red-400 tracking-wide" : "text-3xl font-extrabold text-red-600 tracking-wide";
                 }
                 if (bulbRedInner) bulbRedInner.className = "w-16 h-16 rounded-full bg-red-500 shadow-[0_0_35px_rgba(239,68,68,0.9)] animate-pulse";
             } else if (currentMode === '단서획득중') {
                 if (badge) {
-                    badge.className = "px-4 py-2 bg-amber-950/90 text-amber-300 border border-amber-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0"></span><span class="tracking-wide">단서획득중</span>`;
+                    badge.className = currentTheme === 'dark'
+                        ? "px-4 py-2 bg-amber-950/60 text-amber-300 border border-amber-800 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm"
+                        : "px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse shrink-0"></span><span class="tracking-wide">단서획득중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🟡 단서획득중 모드";
-                    modeLabel.className = "text-3xl font-extrabold text-amber-400 tracking-wide";
+                    modeLabel.className = currentTheme === 'dark' ? "text-3xl font-extrabold text-amber-400 tracking-wide" : "text-3xl font-extrabold text-amber-600 tracking-wide";
                 }
                 if (bulbYellowInner) bulbYellowInner.className = "w-16 h-16 rounded-full bg-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.9)] animate-pulse";
             } else {
                 if (badge) {
-                    badge.className = "px-4 py-2 bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span class="tracking-wide">추리중</span>`;
+                    badge.className = currentTheme === 'dark'
+                        ? "px-4 py-2 bg-emerald-950/60 text-emerald-300 border border-emerald-800 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm"
+                        : "px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-sm";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></span><span class="tracking-wide">추리중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🟢 추리중 모드";
-                    modeLabel.className = "text-3xl font-extrabold text-emerald-400 tracking-wide";
+                    modeLabel.className = currentTheme === 'dark' ? "text-3xl font-extrabold text-emerald-400 tracking-wide" : "text-3xl font-extrabold text-emerald-600 tracking-wide";
                 }
                 if (bulbGreenInner) bulbGreenInner.className = "w-16 h-16 rounded-full bg-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.9)] animate-pulse";
             }
         };
+
+        function applyThemeUI(theme) {
+            const body = document.getElementById('app-body');
+            const header = document.getElementById('app-header');
+            const footer = document.getElementById('app-footer');
+            const panelTraffic = document.getElementById('panel-traffic');
+            const panelTimer = document.getElementById('panel-timer');
+            const headerTitle = document.getElementById('header-title');
+            const headerSubtitle = document.getElementById('header-subtitle');
+            const labelCurrent = document.getElementById('label-current-mode-title');
+            const labelTimer = document.getElementById('label-timer-title');
+            const trafficDesc = document.getElementById('traffic-desc');
+            const labelSetTime = document.getElementById('label-set-time');
+            const timerDisplay = document.getElementById('timer-display');
+            const timerInput = document.getElementById('timer-input-min');
+            const layoutToggle = document.getElementById('layout-toggle-container');
+            const resetBtn = document.getElementById('reset-btn');
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            const timerSettingRow = document.getElementById('timer-setting-row');
+            const creatorBadge = document.getElementById('creator-badge');
+
+            if (theme === 'dark') {
+                if (body) body.className = "bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300";
+                if (header) header.className = "bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-sm transition-colors duration-300";
+                if (footer) footer.className = "bg-slate-800 border-t border-slate-700 py-4 text-center text-xs text-slate-400 font-medium transition-colors duration-300";
+                if (panelTraffic) panelTraffic.className = "bg-slate-800 border border-slate-700 p-8 rounded-3xl shadow-xl flex flex-col items-center space-y-6 w-full max-w-2xl transition-colors duration-300";
+                if (panelTimer) panelTimer.className = "bg-slate-800 border border-slate-700 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6 transition-colors duration-300";
+                if (headerTitle) headerTitle.className = "text-xl font-extrabold tracking-tight text-white transition-colors duration-300";
+                if (headerSubtitle) headerSubtitle.className = "text-xs text-slate-400 font-medium transition-colors duration-300";
+                if (labelCurrent) labelCurrent.className = "text-base font-bold text-slate-300 uppercase tracking-widest transition-colors duration-300";
+                if (labelTimer) labelTimer.className = "text-base font-bold text-slate-300 uppercase tracking-wider transition-colors duration-300";
+                if (trafficDesc) trafficDesc.className = "text-xs text-slate-400 text-center font-medium transition-colors duration-300";
+                if (labelSetTime) labelSetTime.className = "text-xs font-semibold text-slate-400 whitespace-nowrap transition-colors duration-300";
+                if (timerDisplay) timerDisplay.className = "text-6xl font-mono font-black text-blue-400 bg-slate-900 py-6 rounded-2xl border border-slate-700 text-center shadow-inner tracking-wider transition-colors duration-300";
+                if (timerInput) timerInput.className = "w-24 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-center text-slate-100 font-bold text-sm outline-none focus:border-blue-500 transition-colors duration-300";
+                if (layoutToggle) layoutToggle.className = "flex bg-slate-700 p-1.5 rounded-2xl border border-slate-600 space-x-1 transition-colors duration-300";
+                if (resetBtn) resetBtn.className = "py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl font-bold transition shadow-sm cursor-pointer flex items-center justify-center space-x-2";
+                if (themeToggleBtn) themeToggleBtn.className = "px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-yellow-300 rounded-full text-xs font-semibold border border-slate-600 transition flex items-center space-x-1.5 cursor-pointer";
+                if (themeIcon) themeIcon.className = "fa-solid fa-sun";
+                if (themeText) themeText.innerText = "라이트모드";
+                if (timerSettingRow) timerSettingRow.className = "pt-4 border-t border-slate-700 flex items-center space-x-3 transition-colors duration-300";
+                if (creatorBadge) creatorBadge.className = "px-3.5 py-1.5 bg-blue-950 text-blue-300 rounded-full text-xs font-semibold border border-blue-800 transition-colors duration-300";
+            } else {
+                if (body) body.className = "bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between transition-colors duration-300";
+                if (header) header.className = "bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm transition-colors duration-300";
+                if (footer) footer.className = "bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 font-medium transition-colors duration-300";
+                if (panelTraffic) panelTraffic.className = "bg-white border border-slate-200 p-8 rounded-3xl shadow-xl flex flex-col items-center space-y-6 w-full max-w-2xl transition-colors duration-300";
+                if (panelTimer) panelTimer.className = "bg-white border border-slate-200 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6 transition-colors duration-300";
+                if (headerTitle) headerTitle.className = "text-xl font-extrabold tracking-tight text-slate-900 transition-colors duration-300";
+                if (headerSubtitle) headerSubtitle.className = "text-xs text-slate-500 font-medium transition-colors duration-300";
+                if (labelCurrent) labelCurrent.className = "text-base font-bold text-slate-700 uppercase tracking-widest transition-colors duration-300";
+                if (labelTimer) labelTimer.className = "text-base font-bold text-slate-700 uppercase tracking-wider transition-colors duration-300";
+                if (trafficDesc) trafficDesc.className = "text-xs text-slate-500 text-center font-medium transition-colors duration-300";
+                if (labelSetTime) labelSetTime.className = "text-xs font-semibold text-slate-500 whitespace-nowrap transition-colors duration-300";
+                if (timerDisplay) timerDisplay.className = "text-6xl font-mono font-black text-blue-600 bg-slate-50 py-6 rounded-2xl border border-slate-200 text-center shadow-inner tracking-wider transition-colors duration-300";
+                if (timerInput) timerInput.className = "w-24 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-center text-slate-800 font-bold text-sm outline-none focus:border-blue-500 transition-colors duration-300";
+                if (layoutToggle) layoutToggle.className = "flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 space-x-1 transition-colors duration-300";
+                if (resetBtn) resetBtn.className = "py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition shadow-sm cursor-pointer flex items-center justify-center space-x-2";
+                if (themeToggleBtn) themeToggleBtn.className = "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-semibold border border-slate-200 transition flex items-center space-x-1.5 cursor-pointer";
+                if (themeIcon) themeIcon.className = "fa-solid fa-moon";
+                if (themeText) themeText.innerText = "다크모드";
+                if (timerSettingRow) timerSettingRow.className = "pt-4 border-t border-slate-100 flex items-center space-x-3 transition-colors duration-300";
+                if (creatorBadge) creatorBadge.className = "px-3.5 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200 transition-colors duration-300";
+            }
+        }
 
         function updateTimerDisplay() {
             const display = document.getElementById('timer-display');
@@ -284,6 +369,13 @@
             const secs = totalSec % 60;
             display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
+
+        window.toggleTheme = async function() {
+            const currentTheme = localState.timer?.theme || "light";
+            localState.timer.theme = (currentTheme === 'light') ? 'dark' : 'light';
+            renderDashboard();
+            await saveTimerStateToFirebase();
+        };
 
         window.setTrafficLightMode = async function(mode) {
             localState.timer.mode = mode;
