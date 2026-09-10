@@ -32,39 +32,50 @@
 
     <main class="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col items-center justify-center space-y-8">
         
-        <!-- Horizontal Traffic Light Visual Panel -->
+        <!-- Horizontal/Vertical Traffic Light Visual Panel -->
         <div class="bg-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-6 w-full max-w-2xl">
             
-            <div class="text-center space-y-1">
-                <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">현재 활동 신호등 상태</span>
-                <div id="current-mode-label" class="text-3xl font-extrabold text-emerald-400 tracking-wide">🟢 추리중 모드</div>
+            <div class="w-full flex justify-between items-center">
+                <div class="space-y-1">
+                    <span class="text-sm font-bold text-slate-300 uppercase tracking-widest">현재 활동 신호등 상태</span>
+                    <div id="current-mode-label" class="text-3xl font-extrabold text-emerald-400 tracking-wide">🟢 추리중 모드</div>
+                </div>
+                <!-- Layout Direction Toggle Buttons -->
+                <div class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-700 space-x-1">
+                    <button onclick="window.setTrafficLightLayout('horizontal')" id="layout-btn-horizontal" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow">
+                        <i class="fa-solid fa-ellipsis"></i> 가로
+                    </button>
+                    <button onclick="window.setTrafficLightLayout('vertical')" id="layout-btn-vertical" class="px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-ellipsis-vertical"></i> 세로
+                    </button>
+                </div>
             </div>
 
-            <!-- Huge Horizontal Traffic Light Housing -->
-            <div class="bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl">
+            <!-- Huge Traffic Light Housing (Dynamic Flex Container) -->
+            <div id="traffic-light-housing" class="bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300">
                 
-                <!-- Green Bulb (추리중) - Left -->
+                <!-- Green Bulb (추리중) -->
                 <button onclick="window.setTrafficLightMode('추리중')" title="추리중 모드로 전환 (초록불)" 
-                        id="bulb-green" class="w-24 h-24 rounded-full bg-emerald-950 border-4 border-emerald-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                        id="bulb-green" class="w-24 h-24 rounded-full bg-emerald-950 border-4 border-emerald-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl shrink-0">
                     <div id="bulb-green-inner" class="w-16 h-16 rounded-full bg-emerald-900 transition-all duration-300"></div>
                 </button>
 
-                <!-- Yellow Bulb (단서획득중) - Middle -->
+                <!-- Yellow Bulb (단서획득중) -->
                 <button onclick="window.setTrafficLightMode('단서획득중')" title="단서획득중 모드로 전환 (노란불)" 
-                        id="bulb-yellow" class="w-24 h-24 rounded-full bg-amber-950 border-4 border-amber-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                        id="bulb-yellow" class="w-24 h-24 rounded-full bg-amber-950 border-4 border-amber-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl shrink-0">
                     <div id="bulb-yellow-inner" class="w-16 h-16 rounded-full bg-amber-900 transition-all duration-300"></div>
                 </button>
 
-                <!-- Red Bulb (회의중) - Right -->
+                <!-- Red Bulb (회의중) -->
                 <button onclick="window.setTrafficLightMode('회의중')" title="회의중 모드로 전환 (빨간불)" 
-                        id="bulb-red" class="w-24 h-24 rounded-full bg-red-950 border-4 border-red-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                        id="bulb-red" class="w-24 h-24 rounded-full bg-red-950 border-4 border-red-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl shrink-0">
                     <div id="bulb-red-inner" class="w-16 h-16 rounded-full bg-red-900 transition-all duration-300"></div>
                 </button>
 
             </div>
 
             <p class="text-xs text-slate-400 text-center italic">
-                * 신호등 동그라미를 클릭하면 모드가 즉시 전환되며 학생들에게 안내됩니다.
+                * 신호등 동그라미를 클릭하면 모드가 전환되며, 상단 버튼으로 가로/세로 배치를 바꿀 수 있습니다.
             </p>
         </div>
 
@@ -72,10 +83,10 @@
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6">
             
             <div class="flex justify-between items-center">
-                <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">수사 제한 타이머</span>
-                <div id="signal-badge" class="px-4 py-1.5 bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-bold flex items-center space-x-2">
-                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="signal-text">추리중</span>
+                <span class="text-sm font-bold text-slate-300 uppercase tracking-wider">수사 제한 타이머</span>
+                <div id="signal-badge" class="px-4 py-2 bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md">
+                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                    <span id="signal-text" class="tracking-wide">추리중</span>
                 </div>
             </div>
 
@@ -135,7 +146,8 @@
             timer: {
                 remainingSeconds: 300,
                 isRunning: false,
-                mode: "추리중"
+                mode: "추리중",
+                layout: "horizontal"
             }
         };
 
@@ -204,9 +216,27 @@
             const bulbRedInner = document.getElementById('bulb-red-inner');
             const bulbYellowInner = document.getElementById('bulb-yellow-inner');
             const bulbGreenInner = document.getElementById('bulb-green-inner');
+            const housing = document.getElementById('traffic-light-housing');
+            const btnH = document.getElementById('layout-btn-horizontal');
+            const btnV = document.getElementById('layout-btn-vertical');
+
             const currentMode = localState.timer?.mode || "추리중";
+            const currentLayout = localState.timer?.layout || "horizontal";
 
             if (signalText) signalText.innerText = currentMode;
+
+            // Apply layout styling
+            if (housing) {
+                if (currentLayout === 'vertical') {
+                    housing.className = "bg-slate-950 px-6 py-8 rounded-3xl border-4 border-slate-700 flex flex-col items-center justify-center space-y-6 shadow-2xl transition-all duration-300";
+                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
+                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white";
+                } else {
+                    housing.className = "bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl transition-all duration-300";
+                    if (btnH) btnH.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow";
+                    if (btnV) btnV.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white";
+                }
+            }
 
             // Reset bulb glows
             if (bulbRedInner) bulbRedInner.className = "w-16 h-16 rounded-full bg-red-950";
@@ -215,8 +245,8 @@
 
             if (currentMode === '회의중') {
                 if (badge) {
-                    badge.className = "px-4 py-1.5 bg-red-900/80 text-red-300 border border-red-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-400 animate-pulse"></span><span>회의중</span>`;
+                    badge.className = "px-4 py-2 bg-red-950/90 text-red-300 border border-red-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-400 animate-pulse shrink-0"></span><span class="tracking-wide">회의중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🔴 회의중 모드";
@@ -225,8 +255,8 @@
                 if (bulbRedInner) bulbRedInner.className = "w-16 h-16 rounded-full bg-red-500 shadow-[0_0_35px_rgba(239,68,68,0.9)] animate-pulse";
             } else if (currentMode === '단서획득중') {
                 if (badge) {
-                    badge.className = "px-4 py-1.5 bg-amber-900/80 text-amber-300 border border-amber-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span><span>단서획득중</span>`;
+                    badge.className = "px-4 py-2 bg-amber-950/90 text-amber-300 border border-amber-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse shrink-0"></span><span class="tracking-wide">단서획득중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🟡 단서획득중 모드";
@@ -235,8 +265,8 @@
                 if (bulbYellowInner) bulbYellowInner.className = "w-16 h-16 rounded-full bg-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.9)] animate-pulse";
             } else {
                 if (badge) {
-                    badge.className = "px-4 py-1.5 bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
-                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span><span>추리중</span>`;
+                    badge.className = "px-4 py-2 bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 rounded-full text-xs font-bold flex items-center space-x-2.5 shadow-md";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span class="tracking-wide">추리중</span>`;
                 }
                 if (modeLabel) {
                     modeLabel.innerText = "🟢 추리중 모드";
@@ -257,6 +287,12 @@
 
         window.setTrafficLightMode = async function(mode) {
             localState.timer.mode = mode;
+            renderDashboard();
+            await saveTimerStateToFirebase();
+        };
+
+        window.setTrafficLightLayout = async function(layout) {
+            localState.timer.layout = layout;
             renderDashboard();
             await saveTimerStateToFirebase();
         };
