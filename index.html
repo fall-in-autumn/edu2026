@@ -311,7 +311,7 @@
         const db = getFirestore(app);
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-room-v7';
-        const gameDocRef = doc(db, 'artifacts', appId, 'public_data', 'session_state');
+        const gameDocRef = doc(db, 'artifacts', appId);
 
         const suspects = [
             { name: "지수", icon: "fa-user" },
