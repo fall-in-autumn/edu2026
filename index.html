@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>가상공간 특별수사대 - 교사 관리 센터</title>
+    <title>가상공간 특별수사대 - 신호등 타이머 센터</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
@@ -11,8 +11,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
         body { font-family: 'Pretendard', sans-serif; }
-        .draggable-token { cursor: grab; }
-        .draggable-token:active { cursor: grabbing; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
@@ -20,11 +18,11 @@
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
         <div class="flex items-center space-x-3">
             <div class="bg-indigo-600 text-white p-2.5 rounded-xl font-bold shadow">
-                <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                <i class="fa-solid fa-traffic-light text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대 - 교사 관리 센터</h1>
-                <p class="text-xs text-slate-400">도덕 의리T 제작 - 모둠별 수사 위치 보드 관리</p>
+                <h1 class="text-xl font-bold tracking-tight">가상공간 특별수사대 - 신호등 타이머 센터</h1>
+                <p class="text-xs text-slate-400">도덕 의리T 제작 - 대형 신호등 타이머 및 활동 안내 관리</p>
             </div>
         </div>
         <div class="flex items-center space-x-3">
@@ -32,28 +30,88 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
+    <main class="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col items-center justify-center space-y-8">
         
-        <!-- Status & Instructions Banner -->
-        <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
-            <div>
-                <h3 class="font-bold text-lg text-indigo-300"><i class="fa-solid fa-map mr-2"></i>수사 위치 보드 (드래그 앤 드롭)</h3>
-                <p class="text-xs text-slate-400">모둠 카드를 다른 가상공간 상자로 드래그하여 위치를 이동시키세요.</p>
+        <!-- Horizontal Traffic Light Visual Panel -->
+        <div class="bg-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-6 w-full max-w-2xl">
+            
+            <div class="text-center space-y-1">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">현재 활동 신호등 상태</span>
+                <div id="current-mode-label" class="text-3xl font-extrabold text-emerald-400 tracking-wide">🟢 추리중 모드</div>
             </div>
-            <button onclick="window.resetLocations()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-semibold text-slate-300 transition cursor-pointer">
-                <i class="fa-solid fa-rotate-right mr-1"></i> 위치 초기화 (시작점)
-            </button>
+
+            <!-- Huge Horizontal Traffic Light Housing -->
+            <div class="bg-slate-950 px-8 py-6 rounded-3xl border-4 border-slate-700 flex flex-row items-center justify-center space-x-8 shadow-2xl">
+                
+                <!-- Green Bulb (추리중) - Left -->
+                <button onclick="window.setTrafficLightMode('추리중')" title="추리중 모드로 전환 (초록불)" 
+                        id="bulb-green" class="w-24 h-24 rounded-full bg-emerald-950 border-4 border-emerald-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                    <div id="bulb-green-inner" class="w-16 h-16 rounded-full bg-emerald-900 transition-all duration-300"></div>
+                </button>
+
+                <!-- Yellow Bulb (단서획득중) - Middle -->
+                <button onclick="window.setTrafficLightMode('단서획득중')" title="단서획득중 모드로 전환 (노란불)" 
+                        id="bulb-yellow" class="w-24 h-24 rounded-full bg-amber-950 border-4 border-amber-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                    <div id="bulb-yellow-inner" class="w-16 h-16 rounded-full bg-amber-900 transition-all duration-300"></div>
+                </button>
+
+                <!-- Red Bulb (회의중) - Right -->
+                <button onclick="window.setTrafficLightMode('회의중')" title="회의중 모드로 전환 (빨간불)" 
+                        id="bulb-red" class="w-24 h-24 rounded-full bg-red-950 border-4 border-red-500/40 transition transform hover:scale-105 cursor-pointer flex items-center justify-center shadow-2xl">
+                    <div id="bulb-red-inner" class="w-16 h-16 rounded-full bg-red-900 transition-all duration-300"></div>
+                </button>
+
+            </div>
+
+            <p class="text-xs text-slate-400 text-center italic">
+                * 신호등 동그라미를 클릭하면 모드가 즉시 전환되며 학생들에게 안내됩니다.
+            </p>
         </div>
 
-        <!-- Locations Grid (Drop Targets) - Full Width Grid including 시작점 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="board-locations-grid">
-            <!-- Dynamically populated -->
+        <!-- Timer & Controls Panel -->
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-3xl shadow-xl w-full max-w-2xl flex flex-col space-y-6">
+            
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">수사 제한 타이머</span>
+                <div id="signal-badge" class="px-4 py-1.5 bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-bold flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="signal-text">추리중</span>
+                </div>
+            </div>
+
+            <!-- Big Timer Display -->
+            <div id="timer-display" class="text-6xl font-mono font-black text-cyan-400 bg-slate-900 py-6 rounded-2xl border border-slate-700 text-center shadow-inner tracking-wider">
+                05:00
+            </div>
+
+            <!-- Timer Action Buttons -->
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="window.startTimer()" class="py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play"></i><span>시작</span>
+                </button>
+                <button onclick="window.pauseTimer()" class="py-3 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-white transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-pause"></i><span>일시정지</span>
+                </button>
+                <button onclick="window.resetTimer()" class="py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-slate-300 transition shadow cursor-pointer flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-rotate-right"></i><span>초기화</span>
+                </button>
+            </div>
+
+            <!-- Timer Preset Setting -->
+            <div class="pt-4 border-t border-slate-700 flex items-center space-x-3">
+                <span class="text-xs font-semibold text-slate-400 whitespace-nowrap">시간 설정 (분):</span>
+                <input type="number" id="timer-input-min" value="5" min="1" max="60" class="w-24 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-center text-white font-bold text-sm outline-none focus:border-indigo-500">
+                <button onclick="window.setTimerMinutes()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl font-bold text-white text-xs transition shadow cursor-pointer">
+                    시간 적용하기
+                </button>
+            </div>
+
         </div>
 
     </main>
 
     <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
-        도덕 의리T 제작 - 교사 관리 대시보드
+        도덕 의리T 제작 - 신호등 타이머 센터
     </footer>
 
     <script type="module">
@@ -71,33 +129,13 @@
         };
 
         let app, auth, db;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-room-v7';
-
-        const places = [
-            { name: "시작점", icon: "fa-flag-checkered" },
-            { name: "SNS", icon: "fa-share-nodes" },
-            { name: "유튜브", icon: "fa-video" },
-            { name: "게임", icon: "fa-gamepad" },
-            { name: "OTT", icon: "fa-film" },
-            { name: "Zoom", icon: "fa-tv" }
-        ];
-
-        const groupColors = {
-            1: { name: "1모둠", bg: "bg-red-500" },
-            2: { name: "2모둠", bg: "bg-blue-500" },
-            3: { name: "3모둠", bg: "bg-emerald-500" },
-            4: { name: "4모둠", bg: "bg-amber-500" },
-            5: { name: "5모둠", bg: "bg-purple-500" }
-        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'special-investigation-timer-v1';
 
         let localState = {
-            locations: {
-                "시작점": [1, 2, 3, 4, 5],
-                "SNS": [],
-                "유튜브": [],
-                "게임": [],
-                "OTT": [],
-                "Zoom": []
+            timer: {
+                remainingSeconds: 300,
+                isRunning: false,
+                mode: "추리중"
             }
         };
 
@@ -118,7 +156,7 @@
                         await setDoc(gameDocRef, localState);
                     } else {
                         const data = docSnap.data();
-                        if (data.locations) localState.locations = data.locations;
+                        if (data.timer) localState.timer = data.timer;
                     }
                 } catch (fetchErr) {
                     console.warn("Offline or document fetch warning, using local state:", fetchErr);
@@ -130,8 +168,8 @@
                     onSnapshot(gameDocRef, (docSnap) => {
                         if (docSnap.exists()) {
                             const data = docSnap.data();
-                            if (data.locations) {
-                                localState.locations = data.locations;
+                            if (data.timer) {
+                                localState.timer = data.timer;
                                 renderDashboard();
                             }
                         }
@@ -144,112 +182,122 @@
                 console.warn("Initialization fallback to local mode:", err);
                 renderDashboard();
             }
+
+            // Local Timer Tick Loop
+            setInterval(() => {
+                if (localState.timer && localState.timer.isRunning && localState.timer.remainingSeconds > 0) {
+                    localState.timer.remainingSeconds--;
+                    if (localState.timer.remainingSeconds <= 0) {
+                        localState.timer.isRunning = false;
+                    }
+                    updateTimerDisplay();
+                }
+            }, 1000);
         }
 
         window.renderDashboard = function() {
-            const grid = document.getElementById('board-locations-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
+            updateTimerDisplay();
 
-            places.forEach(placeObj => {
-                const locName = placeObj.name;
-                const groupsHere = localState.locations[locName] || [];
+            const badge = document.getElementById('signal-badge');
+            const signalText = document.getElementById('signal-text');
+            const modeLabel = document.getElementById('current-mode-label');
+            const bulbRedInner = document.getElementById('bulb-red-inner');
+            const bulbYellowInner = document.getElementById('bulb-yellow-inner');
+            const bulbGreenInner = document.getElementById('bulb-green-inner');
+            const currentMode = localState.timer?.mode || "추리중";
 
-                let tokensHtml = groupsHere.map(gId => {
-                    const info = groupColors[gId];
-                    return `
-                        <div draggable="true" ondragstart="window.handleDragStart(event, ${gId})" 
-                             class="draggable-token px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md flex items-center justify-between ${info.bg} cursor-grab active:cursor-grabbing">
-                            <span><i class="fa-solid fa-users mr-1"></i>${info.name}</span>
-                            <i class="fa-solid fa-grip-vertical text-white/70 ml-1"></i>
-                        </div>
-                    `;
-                }).join('');
+            if (signalText) signalText.innerText = currentMode;
 
-                grid.innerHTML += `
-                    <div ondragover="window.handleDragOver(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, '${locName}')"
-                         class="bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 transition p-3 rounded-2xl flex flex-col justify-between space-y-3 min-h-[260px] shadow-inner">
-                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                            <span class="font-bold text-slate-200 flex items-center text-sm">
-                                <i class="fa-solid ${placeObj.icon} text-indigo-400 mr-2"></i>${locName}
-                            </span>
-                        </div>
-                        <div class="flex flex-col gap-2.5 flex-1 justify-start">
-                            ${tokensHtml || '<div class="flex-1 flex items-center justify-center text-xs text-slate-600 italic text-center p-4">모둠 말을 이곳으로 드래그하세요</div>'}
-                        </div>
-                    </div>
-                `;
-            });
-        };
+            // Reset bulb glows
+            if (bulbRedInner) bulbRedInner.className = "w-16 h-16 rounded-full bg-red-950";
+            if (bulbYellowInner) bulbYellowInner.className = "w-16 h-16 rounded-full bg-amber-950";
+            if (bulbGreenInner) bulbGreenInner.className = "w-16 h-16 rounded-full bg-emerald-950";
 
-        let draggedGroupId = null;
-
-        window.handleDragStart = function(e, gId) {
-            draggedGroupId = gId;
-            e.dataTransfer.setData('text/plain', gId);
-        };
-
-        window.handleDragOver = function(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('border-indigo-400', 'bg-slate-800/80');
-        };
-
-        window.handleDragLeave = function(e) {
-            e.currentTarget.classList.remove('border-indigo-400', 'bg-slate-800/80');
-        };
-
-        window.handleDrop = async function(e, targetLoc) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('border-indigo-400', 'bg-slate-800/80');
-            
-            if (!draggedGroupId) return;
-            const gId = parseInt(draggedGroupId);
-
-            let newLocations = JSON.parse(JSON.stringify(localState.locations));
-
-            for (let l in newLocations) {
-                newLocations[l] = newLocations[l].filter(id => id !== gId);
+            if (currentMode === '회의중') {
+                if (badge) {
+                    badge.className = "px-4 py-1.5 bg-red-900/80 text-red-300 border border-red-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-400 animate-pulse"></span><span>회의중</span>`;
+                }
+                if (modeLabel) {
+                    modeLabel.innerText = "🔴 회의중 모드";
+                    modeLabel.className = "text-3xl font-extrabold text-red-400 tracking-wide";
+                }
+                if (bulbRedInner) bulbRedInner.className = "w-16 h-16 rounded-full bg-red-500 shadow-[0_0_35px_rgba(239,68,68,0.9)] animate-pulse";
+            } else if (currentMode === '단서획득중') {
+                if (badge) {
+                    badge.className = "px-4 py-1.5 bg-amber-900/80 text-amber-300 border border-amber-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span><span>단서획득중</span>`;
+                }
+                if (modeLabel) {
+                    modeLabel.innerText = "🟡 단서획득중 모드";
+                    modeLabel.className = "text-3xl font-extrabold text-amber-400 tracking-wide";
+                }
+                if (bulbYellowInner) bulbYellowInner.className = "w-16 h-16 rounded-full bg-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.9)] animate-pulse";
+            } else {
+                if (badge) {
+                    badge.className = "px-4 py-1.5 bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-bold flex items-center space-x-2";
+                    badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span><span>추리중</span>`;
+                }
+                if (modeLabel) {
+                    modeLabel.innerText = "🟢 추리중 모드";
+                    modeLabel.className = "text-3xl font-extrabold text-emerald-400 tracking-wide";
+                }
+                if (bulbGreenInner) bulbGreenInner.className = "w-16 h-16 rounded-full bg-emerald-400 shadow-[0_0_35px_rgba(16,185,129,0.9)] animate-pulse";
             }
+        };
 
-            if (!newLocations[targetLoc]) {
-                newLocations[targetLoc] = [];
-            }
-            newLocations[targetLoc].push(gId);
+        function updateTimerDisplay() {
+            const display = document.getElementById('timer-display');
+            if (!display || !localState.timer) return;
+            const totalSec = localState.timer.remainingSeconds || 0;
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
 
-            localState.locations = newLocations;
+        window.setTrafficLightMode = async function(mode) {
+            localState.timer.mode = mode;
             renderDashboard();
+            await saveTimerStateToFirebase();
+        };
 
+        window.setTimerMinutes = async function() {
+            const input = document.getElementById('timer-input-min');
+            const mins = parseInt(input.value) || 5;
+            localState.timer.remainingSeconds = mins * 60;
+            localState.timer.isRunning = false;
+            updateTimerDisplay();
+            await saveTimerStateToFirebase();
+        };
+
+        window.startTimer = async function() {
+            localState.timer.isRunning = true;
+            await saveTimerStateToFirebase();
+        };
+
+        window.pauseTimer = async function() {
+            localState.timer.isRunning = false;
+            await saveTimerStateToFirebase();
+        };
+
+        window.resetTimer = async function() {
+            const input = document.getElementById('timer-input-min');
+            const mins = parseInt(input.value) || 5;
+            localState.timer.remainingSeconds = mins * 60;
+            localState.timer.isRunning = false;
+            updateTimerDisplay();
+            await saveTimerStateToFirebase();
+        };
+
+        async function saveTimerStateToFirebase() {
             if (gameDocRef) {
                 try {
-                    await setDoc(gameDocRef, { locations: newLocations }, { merge: true });
+                    await setDoc(gameDocRef, { timer: localState.timer }, { merge: true });
                 } catch (err) {
-                    console.error("Failed to update location via drop:", err);
+                    console.error("Failed to update timer:", err);
                 }
             }
-
-            draggedGroupId = null;
-        };
-
-        window.resetLocations = async function() {
-            let resetLocs = {
-                "시작점": [1, 2, 3, 4, 5],
-                "SNS": [],
-                "유튜브": [],
-                "게임": [],
-                "OTT": [],
-                "Zoom": []
-            };
-            localState.locations = resetLocs;
-            renderDashboard();
-
-            if (gameDocRef) {
-                try {
-                    await setDoc(gameDocRef, { locations: resetLocs }, { merge: true });
-                } catch (err) {
-                    console.error("Reset error:", err);
-                }
-            }
-        };
+        }
 
         initApp();
     </script>
