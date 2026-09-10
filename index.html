@@ -13,7 +13,7 @@
         body { font-family: 'Pretendard', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
         <div class="flex items-center space-x-3">
@@ -27,7 +27,7 @@
         </div>
         <div id="user-status-badge" class="flex items-center space-x-3">
             <span class="px-3 py-1 bg-slate-700 rounded-full text-xs font-semibold text-slate-300" id="role-display">역할 선택 대기중</span>
-            <button id="logout-btn" onclick="logoutUser()" class="hidden text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-bold transition">나가기</button>
+            <button id="logout-btn" onclick="logoutUser()" class="hidden text-xs bg-red-600 hover:bg-red-500 px-3 py-1 rounded font-bold transition cursor-pointer">나가기</button>
         </div>
     </header>
 
@@ -45,7 +45,7 @@
                     <button onclick="selectRole('teacher')" class="p-6 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-chalkboard-user text-3xl"></i>
                         <span>교사 (선생님)</span>
-                        <span class="text-xs font-normal text-indigo-200">구글 계정 로그인 필수</span>
+                        <span class="text-xs font-normal text-indigo-200">구글 계정 인증 필수</span>
                     </button>
                     <button onclick="selectRole('student')" class="p-6 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-users text-3xl"></i>
@@ -69,7 +69,7 @@
 
                 <!-- Teacher Google Login Box -->
                 <div id="teacher-login-box" class="hidden space-y-4 pt-4 border-t border-slate-700 text-center">
-                    <p class="text-sm text-indigo-300">교사 인증을 위해 구글 계정으로 로그인해주세요.</p>
+                    <p class="text-sm text-indigo-300">지정된 교사 구글 계정으로 로그인해주세요.</p>
                     <button onclick="loginWithGoogle()" class="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold transition shadow flex items-center justify-center space-x-2 cursor-pointer">
                         <i class="fa-brands fa-google text-red-500 text-lg"></i>
                         <span>구글 계정으로 교사 로그인</span>
@@ -137,9 +137,9 @@
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs text-slate-300 font-semibold">정답 카드 설정 (비밀 봉투):</label>
+                            <label class="text-xs text-slate-300 font-semibold">정답 카드 설정 및 배부:</label>
                             <button onclick="openSecretModal()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
-                                <i class="fa-solid fa-lock mr-2"></i>정답 봉투 지정하기
+                                <i class="fa-solid fa-lock mr-2"></i>비밀 정답 설정 및 카드 자동 분배
                             </button>
                         </div>
                     </div>
@@ -200,11 +200,15 @@
 
     </main>
 
+    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-400">
+        도덕 의리T 제작
+    </footer>
+
     <!-- Secret Setting Modal (Teacher) -->
     <div id="secret-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
-            <h3 class="text-lg font-bold text-indigo-400">정답 봉투 설정 (선생님 전용)</h3>
-            <p class="text-xs text-slate-400">비밀리에 은닉될 정답 조합을 직접 선택하세요.</p>
+            <h3 class="text-lg font-bold text-indigo-400">비밀 정답 설정 및 카드 배부 (선생님 전용)</h3>
+            <p class="text-xs text-slate-400">정답 봉투 조합을 선택하면 나머지 카드가 모둠별로 균등 자동 배부됩니다.</p>
             <div class="space-y-3 text-sm">
                 <div>
                     <label class="block font-semibold mb-1">범인 정답:</label>
@@ -225,7 +229,7 @@
             </div>
             <div class="flex justify-end space-x-2 pt-2">
                 <button onclick="closeSecretModal()" class="px-4 py-2 bg-slate-700 rounded text-sm cursor-pointer">취소</button>
-                <button onclick="saveSecretAndDistribute()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-bold cursor-pointer">저장 및 카드 배부</button>
+                <button onclick="saveSecretAndDistribute()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-bold cursor-pointer">정답 저장 및 카드 자동배부</button>
             </div>
         </div>
     </div>
@@ -280,7 +284,6 @@
         const provider = new GoogleAuthProvider();
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-special-investigation';
-        // FIX: Ensure even number of segments for Firestore doc reference (collection/document)
         const gameStateDocRef = doc(db, 'game_sessions', appId);
 
         const suspects = ["학생회장 민수", "도서부장 서연", "방송반 지호", "체육부장 현우", "자율동아리 유나"];
@@ -301,13 +304,7 @@
             myGroup: null,
             locations: { "도서관": [1, 2], "과학실": [3], "컴퓨터실": [4], "방송실": [5], "교무실": [] },
             secretEnvelope: { suspect: suspects[0], place: places[0], cause: causes[0], type: types[0] },
-            groupCards: {
-                1: ["도서부장 서연", "과학실", "호기심과 장난"],
-                2: ["방송반 지호", "컴퓨터실", "사이버 불링"],
-                3: ["체육부장 현우", "방송실", "저작권 침해"],
-                4: ["자율동아리 유나", "교무실", "개인정보 유출"],
-                5: ["학생회장 민수", "도서관", "허위사실 유포"]
-            }
+            groupCards: { 1: [], 2: [], 3: [], 4: [], 5: [] }
         };
 
         window.selectRole = function(role) {
@@ -462,10 +459,14 @@
             const container = document.getElementById('my-cards-container');
             if (!container) return;
             if (localGameState.role === 'teacher') {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic">교사는 전체 카드 배부 및 비밀 정답을 관리합니다.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 italic">교사는 카드 분배 현황 및 비밀 정답을 관리합니다.</p>`;
                 return;
             }
             const cards = localGameState.groupCards[localGameState.myGroup] || [];
+            if (cards.length === 0) {
+                container.innerHTML = `<p class="text-xs text-amber-400 italic">선생님이 아직 카드를 배부하지 않았습니다.</p>`;
+                return;
+            }
             container.innerHTML = cards.map(c => `
                 <div class="bg-slate-900 border border-slate-700 p-2 rounded flex items-center space-x-2 text-xs">
                     <i class="fa-solid fa-shield text-emerald-400"></i>
@@ -496,14 +497,41 @@
         window.closeSecretModal = function() { document.getElementById('secret-modal').classList.add('hidden'); };
         
         window.saveSecretAndDistribute = async function() {
-            localGameState.secretEnvelope.suspect = document.getElementById('secret-suspect').value;
-            localGameState.secretEnvelope.place = document.getElementById('secret-place').value;
-            localGameState.secretEnvelope.cause = document.getElementById('secret-cause').value;
-            localGameState.secretEnvelope.type = document.getElementById('secret-type').value;
+            const secSuspect = document.getElementById('secret-suspect').value;
+            const secPlace = document.getElementById('secret-place').value;
+            const secCause = document.getElementById('secret-cause').value;
+            const secType = document.getElementById('secret-type').value;
+
+            localGameState.secretEnvelope = { suspect: secSuspect, place: secPlace, cause: secCause, type: secType };
+
+            // Distribute remaining cards evenly across 5 groups without giving same card category pile overload
+            const remainingSuspects = suspects.filter(s => s !== secSuspect);
+            const remainingPlaces = places.filter(p => p !== secPlace);
+            const remainingCauses = causes.filter(c => c !== secCause);
+            const remainingTypes = types.filter(t => t !== secType);
+
+            // Shuffle pool helper
+            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+            shuffle(remainingSuspects);
+            shuffle(remainingPlaces);
+            shuffle(remainingCauses);
+            shuffle(remainingTypes);
+
+            let newGroupCards = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+            let allRemainingPool = [...remainingSuspects, ...remainingPlaces, ...remainingCauses, ...remainingTypes];
+            shuffle(allRemainingPool);
+
+            let gIdx = 1;
+            allRemainingPool.forEach(card => {
+                newGroupCards[gIdx].push(card);
+                gIdx = gIdx % 5 + 1;
+            });
+
+            localGameState.groupCards = newGroupCards;
 
             await setDoc(gameStateDocRef, localGameState, { merge: true });
             closeSecretModal();
-            alert("정답 봉투가 설정되고 실시간 반영되었습니다!");
+            alert("정답 봉투가 설정되고 각 모둠에게 균등 단서 카드가 자동 배부되었습니다!");
         };
 
         window.openAccusationModal = function() {
