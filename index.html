@@ -38,14 +38,14 @@
             <div class="max-w-md w-full space-y-6">
                 <div class="space-y-2">
                     <h2 class="text-2xl font-extrabold text-indigo-400">수사대에 오신 것을 환영합니다!</h2>
-                    <p class="text-sm text-slate-300">역할을 선택하여 게임에 참여해주세요.</p>
+                    <p class="text-sm text-slate-300">역할을 선택하여 게임에 참여해주세요. (모두 동일한 수사 화면을 공유합니다)</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <button onclick="window.selectRole('teacher')" class="p-6 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-chalkboard-user text-3xl"></i>
-                        <span>교사 (선생님)</span>
-                        <span class="text-xs font-normal text-indigo-200">관리자 인증</span>
+                        <span>교사 (관리자)</span>
+                        <span class="text-xs font-normal text-indigo-200">정답 및 통제 권한</span>
                     </button>
                     <button onclick="window.selectRole('student')" class="p-6 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition shadow-lg flex flex-col items-center space-y-2 cursor-pointer">
                         <i class="fa-solid fa-users text-3xl"></i>
@@ -78,6 +78,7 @@
             </div>
         </div>
 
+        <!-- Unified Game Interface (Teacher & Student see identical layout) -->
         <div id="game-interface" class="hidden lg:col-span-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Left & Center: Board & Controls -->
@@ -85,8 +86,8 @@
                 <!-- Status Banner & Timer -->
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex justify-between items-center shadow">
                     <div>
-                        <h3 class="font-bold text-lg text-indigo-300">학교 수사 현황판</h3>
-                        <p class="text-xs text-slate-400" id="game-phase-desc">선생님이 게임을 시작하면 수사가 진행됩니다.</p>
+                        <h3 class="font-bold text-lg text-indigo-300">학교 수사 현황판 (공유 화면)</h3>
+                        <p class="text-xs text-slate-400" id="game-phase-desc">모든 수사원이 같은 정보를 공유하고 있습니다.</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <div class="bg-slate-900 px-4 py-2 rounded-lg border border-slate-700 text-center">
@@ -100,7 +101,7 @@
                 <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl relative">
                     <h4 class="font-bold mb-4 text-slate-200 flex items-center justify-between">
                         <span><i class="fa-solid fa-map text-indigo-400 mr-2"></i>가상공간 수사 위치 보드</span>
-                        <span class="text-xs font-normal text-slate-400">* 교사만 위치 이동 가능</span>
+                        <span class="text-xs font-normal text-slate-400" id="board-subtitle">* 실시간 동기화됨</span>
                     </h4>
 
                     <!-- Rooms Grid (5 locations) -->
@@ -109,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- Teacher Controls Panel -->
+                <!-- Teacher Controls Panel (Visible only to Teacher) -->
                 <div id="teacher-control-panel" class="hidden bg-slate-800 border border-indigo-500/50 p-6 rounded-2xl shadow-xl space-y-4">
                     <h4 class="font-bold text-indigo-400 flex items-center">
                         <i class="fa-solid fa-screwdriver-wrench mr-2"></i>교사 관리자 패널
@@ -139,7 +140,7 @@
                             <label class="text-xs text-slate-300 font-semibold">게임 시작 및 카드 배부 컨트롤:</label>
                             <div class="flex space-x-2">
                                 <button onclick="window.startCountdownGame()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold transition text-white shadow cursor-pointer">
-                                    <i class="fa-solid fa-play mr-1"></i> 게임 시작 (카운트다운)
+                                    <i class="fa-solid fa-play mr-1"></i> 게임 시작
                                 </button>
                                 <button onclick="window.openSecretModal()" class="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition text-amber-300 border border-amber-500/30 cursor-pointer">
                                     <i class="fa-solid fa-lock mr-1"></i> 정답 및 카드 배부
@@ -150,15 +151,16 @@
                 </div>
             </div>
 
+            <!-- Right Column: Cards, Checklist & Accusation -->
             <div class="space-y-6">
                 <!-- My Hand Cards -->
                 <div class="bg-slate-800 border border-slate-700 p-5 rounded-2xl shadow-xl space-y-3">
                     <h4 class="font-bold text-slate-200 flex items-center justify-between">
-                        <span><i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>우리 모둠 보유 카드</span>
+                        <span><i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>보유 카드 (내 모둠)</span>
                         <span id="my-group-badge" class="text-xs px-2 py-0.5 bg-emerald-900 text-emerald-300 rounded font-semibold">비접속</span>
                     </h4>
                     <div id="my-cards-container" class="space-y-2 text-sm text-slate-300">
-                        <p class="text-xs text-slate-400 italic">모둠에 입장해주세요.</p>
+                        <p class="text-xs text-slate-400 italic">모둠을 선택해주세요.</p>
                     </div>
                 </div>
 
@@ -223,7 +225,7 @@
     <div id="countdown-overlay" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
         <div class="text-center space-y-4">
             <div class="text-6xl md:text-8xl font-extrabold text-amber-400 animate-bounce" id="countdown-number">3</div>
-            <p class="text-xl md:text-2xl font-bold text-white">선생님이 수사 시작을 선언했습니다!</p>
+            <p class="text-xl md:text-2xl font-bold text-white">수사가 시작되었습니다!</p>
         </div>
     </div>
 
@@ -291,7 +293,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Imports & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
@@ -350,7 +351,7 @@
 
         let localGameState = {
             role: null,
-            myGroup: null,
+            myGroup: 1,
             markerMode: 'exclude',
             locations: { "SNS": [1, 2, 3, 4, 5], "유튜브": [], "게임": [], "OTT": [], "Zoom": [] },
             secretEnvelope: { suspect: "지수", place: "SNS", cause: "개방성", type: "사이버 폭력" },
@@ -363,6 +364,7 @@
                 document.getElementById('teacher-login-box').classList.remove('hidden');
                 document.getElementById('student-login-box').classList.add('hidden');
             } else {
+                document.getElementById('student-login-box').classList.add('hidden'); // 모둠 선택창은 바로 보거나 간소화
                 document.getElementById('student-login-box').classList.remove('hidden');
                 document.getElementById('teacher-login-box').classList.add('hidden');
             }
@@ -433,19 +435,7 @@
 
         function syncWithFirebase() {
             getDoc(gameDocRef).then((docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.locations) localGameState.locations = data.locations;
-                    if (data.secretEnvelope) localGameState.secretEnvelope = data.secretEnvelope;
-                    if (data.groupCards) localGameState.groupCards = data.groupCards;
-                    if (data.exclusions) localGameState.exclusions = data.exclusions;
-                    if (data.triggerCountdown) {
-                        triggerLocalCountdown();
-                    }
-                    renderBoard();
-                    renderChecklists();
-                    renderMyCards();
-                } else if (localGameState.role === 'teacher') {
+                if (!docSnap.exists()) {
                     setDoc(gameDocRef, localGameState);
                 }
             }).catch(err => console.warn("Initial load warning:", err));
@@ -570,7 +560,7 @@
             if (!container) return;
             container.innerHTML = '';
             
-            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 'common');
+            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 1);
             if (!localGameState.exclusions[myGroupKey]) {
                 localGameState.exclusions[myGroupKey] = {};
             }
@@ -607,7 +597,7 @@
         }
 
         window.toggleMarker = async function(itemKey) {
-            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 'common');
+            const myGroupKey = localGameState.role === 'teacher' ? 'teacher' : (localGameState.myGroup || 1);
             if (!localGameState.exclusions[myGroupKey]) {
                 localGameState.exclusions[myGroupKey] = {};
             }
@@ -633,13 +623,13 @@
         window.renderMyCards = function() {
             const container = document.getElementById('my-cards-container');
             if (!container) return;
-            if (localGameState.role === 'teacher') {
-                container.innerHTML = `<p class="text-xs text-slate-400 italic">교사는 카드 분배 현황 및 비밀 정답을 관리합니다.</p>`;
-                return;
-            }
-            const cards = localGameState.groupCards[localGameState.myGroup] || [];
+            
+            const groupToCheck = localGameState.role === 'teacher' ? 1 : localGameState.myGroup;
+            document.getElementById('my-group-badge').innerText = groupColors[groupToCheck].name;
+
+            const cards = localGameState.groupCards[groupToCheck] || [];
             if (cards.length === 0) {
-                container.innerHTML = `<p class="text-xs text-amber-400 italic">선생님이 아직 카드를 배부하지 않았습니다.</p>`;
+                container.innerHTML = `<p class="text-xs text-amber-400 italic">아직 카드가 배부되지 않았습니다.</p>`;
                 return;
             }
             container.innerHTML = cards.map(c => `
@@ -716,10 +706,6 @@
         };
 
         window.openAccusationModal = function() {
-            if (localGameState.role === 'teacher') {
-                alert("선생님은 최종 고발을 할 수 없습니다.");
-                return;
-            }
             document.getElementById('accusation-modal').classList.remove('hidden');
         };
         window.closeAccusationModal = function() { document.getElementById('accusation-modal').classList.add('hidden'); };
@@ -732,7 +718,7 @@
 
             const secret = localGameState.secretEnvelope;
             if (s === secret.suspect && p === secret.place && c === secret.cause && t === secret.type) {
-                alert(`🎉 정답입니다! ${groupColors[localGameState.myGroup].name}이(가) 사건을 완벽하게 해결했습니다!`);
+                alert(`🎉 정답입니다! 사건을 완벽하게 해결했습니다!`);
                 window.closeAccusationModal();
             } else {
                 alert(`❌ 아쉽습니다! 지목하신 내용 중 오답이 포함되어 있습니다.`);
