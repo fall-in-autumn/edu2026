@@ -166,19 +166,35 @@
 
         let gameDocRef = null;
 
-        // Web Audio API beep sound generator when timer completes
         function playAlarmSound() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.8);
+                
+                // 귀여운 3단 멜로디 노트 (C5, E5, G5)
+                const notes = [523.25, 659.25, 783.99]; 
+                const noteDuration = 0.15; // 각 음의 길이 (초)
+                
+                notes.forEach((freq, index) => {
+                    const startTime = audioCtx.currentTime + (index * 0.18);
+                    
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    // 귀여운 느낌의 sine파 사용
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    
+                    // 부드러운 음의 볼륨 변화 (Envelope)
+                    gainNode.gain.setValueAtTime(0.0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.03);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + noteDuration);
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + noteDuration);
+                });
             } catch (e) {
                 console.warn("AudioContext not supported or blocked:", e);
             }
@@ -461,11 +477,13 @@
 
         window.startTimer = async function() {
             localState.timer.isRunning = true;
+            renderDashboard(); // 즉시 화면 갱신
             await saveTimerStateToFirebase();
         };
 
         window.pauseTimer = async function() {
             localState.timer.isRunning = false;
+            renderDashboard(); // 즉시 화면 갱신
             await saveTimerStateToFirebase();
         };
 
@@ -474,7 +492,7 @@
             const mins = parseInt(input.value) || 5;
             localState.timer.remainingSeconds = mins * 60;
             localState.timer.isRunning = false;
-            updateTimerDisplay();
+            renderDashboard();
             await saveTimerStateToFirebase();
         };
 
